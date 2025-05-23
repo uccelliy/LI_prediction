@@ -1,10 +1,10 @@
 
 import pandas as pd
-import util
-import RF
-import SVM
-import XGB
-import Stack
+import core.util as util
+import core.RF as RF
+import core.SVM as SVM
+import core.XGB as XGB
+import core.Stack as Stack
 
 
 # Read in the data

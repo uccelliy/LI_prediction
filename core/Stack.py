@@ -1,5 +1,5 @@
-import util
-from util import n_iter, kfold, random_state, scoring_regr
+import core.util as util
+from core.util import n_iter, kfold, random_state, scoring_regr
 import xgboost as xgb
 from sklearn.model_selection import RandomizedSearchCV
 from mlxtend.regressor import StackingCVRegressor

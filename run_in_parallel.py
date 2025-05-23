@@ -2,11 +2,11 @@ import pandas as pd
 from joblib import Parallel, delayed
 import os
 from tqdm import tqdm  # 可选：进度条
-import util
-import RF
-import SVM
-import XGB
-import Stack
+import core.util as util
+import core.RF as RF
+import core.SVM as SVM
+import core.XGB as XGB
+import core.Stack as Stack
 
 def run_models_for_behavior(behav_name, X, Y_all):
     """运行单个 behavior 的所有模型（RF/SVM/XGB 并行，Stack 最后）"""

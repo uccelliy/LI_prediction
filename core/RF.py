@@ -1,5 +1,5 @@
-from util import n_iter, kfold, random_state, scoring_regr
-import util
+from core.util import n_iter, kfold, random_state, scoring_regr
+import core.util as util
 import pandas as pd
 from time import perf_counter
 import shap

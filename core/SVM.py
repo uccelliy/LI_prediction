@@ -1,6 +1,6 @@
-from util import n_iter, kfold, random_state, scoring_regr
+from core.util import n_iter, kfold, random_state, scoring_regr
 import pandas as pd
-import util
+import core.util as util
 from time import perf_counter
 import shap
 from datetime import timedelta
