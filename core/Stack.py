@@ -7,7 +7,7 @@ from time import perf_counter
 from datetime import timedelta
 import joblib
 ## Stacked model
-def run_stack(X_new, X_test_new, Y_train, Y_test,Y_name,groups):
+def run_stack(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     print("Running Stacked model")
 # Set up model
     model_name = "Stack"
@@ -50,12 +50,12 @@ def run_stack(X_new, X_test_new, Y_train, Y_test,Y_name,groups):
     print("Time: ", timedelta(seconds = stop -start))
 
     # Save results
-    best_results_stack = util.save_results_cv_pipe(grid_search_meta, model_name, "regr", scoring_regr,Y_name,X_new)
+    best_results_stack = util.save_results_cv_pipe(grid_search_meta, model_name, model_type, scoring_regr,Y_name,X_new)
     print("Best results:")
     print(best_results_stack)
 
     ### Run model on test set
     y_pred_test = stack_pipeline.predict(X_test_new)
-    performance = util.calc_performance_regression2(Y_test, y_pred_test, model_name,Y_name,X_test_new)
+    performance = util.calc_performance_regression2(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type)
     print(performance)
 

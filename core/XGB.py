@@ -1,4 +1,4 @@
-from core.util import n_iter, kfold, random_state, scoring_regr
+from core.util import n_iter, kfold, random_state
 import pandas as pd
 import core.util as util
 from time import perf_counter
@@ -12,15 +12,14 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import joblib
 ### XGBoost regression
-def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups):
+def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     #将X，Y分为训练集和测试集
     print("Running XGBoost regression")
 # Set up model
     model_name = "XGB"
-    model = xgb.XGBRegressor(random_state=random_state)
-
-    # Define parameter grid
-    grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
+    if(model_type == "regr"):
+        model = xgb.XGBRegressor(random_state=random_state)
+        grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
                 'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
                 'gamma': [i/10 for i in range(0,6)],
                 'max_depth': list(range(2, 16)),
@@ -29,10 +28,29 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups):
                 'colsample_bytree': [x/10 for x in range(2, 11)],
                 'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
                 'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5]}
+        scoring=' neg_mean_squared_error'  # Default scoring for regression
+    elif(model_type == "class"):
+        model = xgb.XGBClassifier(random_state=random_state)
+        grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
+            'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
+            'gamma': [i/10 for i in range(0,6)],
+            'max_depth': list(range(2, 16)),
+            'min_child_weight': list(range(1,11)),
+            'subsample': [x/10 for x in range(2, 11)],
+            'colsample_bytree': [x/10 for x in range(2, 11)],
+            'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+            'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+            'scale_pos_weight': [1, 2, 5]}
+        scoring = 'roc_auc'
+    else:
+        raise ValueError("model_type must be 'regr' or 'class'")
+
+    # Define parameter grid 
+   
 
 #    grid_xgb_debug={'n_estimators': list(range(100, 1100, 100)),'max_depth': list(range(2, 15))}
     xgb_regr = RandomizedSearchCV(estimator = model, param_distributions = grid_pipe_xgb, 
-                                  scoring = scoring_regr, n_iter = n_iter, 
+                                  scoring = scoring, n_iter = n_iter, 
                                   cv = util.PseudoGroupCV(kfold,groups), 
                                   verbose = 0, random_state = random_state, n_jobs = -1)
     # Randomized search:
@@ -44,7 +62,7 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups):
     print("Time: ", timedelta(seconds = stop-start))
 
     # Save results
-    best_results = util.save_results_cv_pipe(xgb_regr, model_name, "regr", scoring_regr,Y_name,X_new)
+    best_results = util.save_results_cv_pipe(xgb_regr, model_name, model_type, scoring,Y_name,X_new)
     print("Best results:")
     print(best_results)
 
@@ -56,12 +74,12 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups):
     joblib.dump(xgb_mod, f'xgb_{Y_name}.pkl')
     ### Run model on test set
     y_pred_test = xgb_mod.predict(X_test_new)
-    performance = util.calc_performance_regression2(Y_test, y_pred_test, model_name,Y_name,X_test_new)
+    performance = util.calc_performance_regression2(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type)
     print(performance)
 
     ### Calculate feature_importances
     start = perf_counter()
-    feat_imp_xgb = util.calc_feature_importance(xgb_mod, X_test_new, Y_test, model_name, "regr",Y_name)
+    util.calc_feature_importance(xgb_mod, X_test_new, Y_test, model_name, model_type,Y_name)
     stop = perf_counter()
     print("Time: ", timedelta(seconds = stop-start))
 

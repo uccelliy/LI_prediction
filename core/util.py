@@ -10,12 +10,10 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 # Define parameters random search + resampling
 n_iter = 100
 cv = 10
-scoring_class = 'roc_auc'
-scoring_regr = 'neg_root_mean_squared_error'
 random_state = 42
 kfold = GroupKFold(n_splits=cv)
 # This whole script is regression
-model_type = "regr"
+
 
 # Save results from randomized search
 def save_results_cv_pipe(model_random, model_name, model_type, scoring,Y_name,X_new):
@@ -69,7 +67,7 @@ def save_results_cv_pipe(model_random, model_name, model_type, scoring,Y_name,X_
     return best
 
 # Function to calculate 95% bootstrap interval
-def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2, n_bootstraps=10000 ):
+def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2, n_bootstraps=10000):
     """
     computes metric on bootstrap samples, calculates 95% confidence interval
     function: e.g. mean_squared_error, roc_auc_score, r2_score, etc.
@@ -115,7 +113,7 @@ def rmse_func(y_true, y_pred):
     return np.sqrt(mean_squared_error(y_true, y_pred))
 
 # Define function to calculate performance measures regression
-def calc_performance_regression2(y_test, y_pred, model_name, Y_name,X_test_new):
+def calc_performance_regression2(y_test, y_pred, model_name, Y_name,X_test_new,model_type):
     r2 = r2_score(y_test, y_pred)
     adjusted_r2 = 1 - ((1 - r2) * (X_test_new.shape[0] - 1)) / (X_test_new.shape[0] - X_test_new.shape[1] - 1)
     mae = mean_absolute_error(y_test, y_pred)
@@ -125,10 +123,10 @@ def calc_performance_regression2(y_test, y_pred, model_name, Y_name,X_test_new):
     performance = [r2, ci_lower1, ci_upper1, mae, rmse,ci_lower2, ci_upper2, adjusted_r2, ci_lower3, ci_upper3]
 
     # save performance
-    df_perf = pd.read_csv(f"../results/performance_regr_{Y_name}.csv", index_col=0)
-    perf = pd.DataFrame([performance], columns=df_perf.columns.tolist(), index=[f"{model_name}_regr"])
+    df_perf = pd.read_csv(f"../results/performance_{model_type}_{Y_name}.csv", index_col=0)
+    perf = pd.DataFrame([performance], columns=df_perf.columns.tolist(), index=[f"{model_name}_{model_type}"])
     df_perf = pd.concat([df_perf, perf])
-    df_perf.to_csv(f"../results/performance_regr_{Y_name}.csv")
+    df_perf.to_csv(f"../results/performance_{model_type}_{Y_name}.csv")
 
     # save predictions
     if model_name.endswith("_child") or model_name.endswith("_child_noprs"):
@@ -136,10 +134,10 @@ def calc_performance_regression2(y_test, y_pred, model_name, Y_name,X_test_new):
     else:
         file_extension = ""
 
-    df_pred = pd.read_csv(f"../results/predictions_regr{file_extension}_{Y_name}.csv", index_col=0)
-    pred = pd.DataFrame(y_pred, columns=[f"{model_name}_regr"], index=df_pred.index.tolist())
+    df_pred = pd.read_csv(f"../results/predictions_{model_type}{file_extension}_{Y_name}.csv", index_col=0)
+    pred = pd.DataFrame(y_pred, columns=[f"{model_name}_{model_type}"], index=df_pred.index.tolist())
     df_pred = pd.concat([df_pred, pred], axis=1)
-    df_pred.to_csv(f"../results/predictions_regr{file_extension}_{Y_name}.csv")
+    df_pred.to_csv(f"../results/predictions_{model_type}{file_extension}_{Y_name}.csv")
 
     return perf
 
@@ -190,7 +188,7 @@ class PseudoGroupCV:
     def get_n_splits(self, X, y, groups):
         return self.cv.get_n_splits(X,y, groups)
     
-def prepare_data(data1,data2,name):
+def prepare_data(data1,data2,name,model_type="regr"):
      # Define random_state
     data1 = data1.reset_index(drop=True)
     data2 = data2.reset_index(drop=True)
@@ -213,24 +211,24 @@ def prepare_data(data1,data2,name):
     # predictions_regr.csv
     df_pred_init = pd.DataFrame(Y_test.values, index = X_test.index.tolist(), columns = ["y_test"])
     print(df_pred_init)
-    df_pred_init.to_csv(f"../results/predictions_regr_{name}.csv")
+    df_pred_init.to_csv(f"../results/predictions_{model_type}_{name}.csv")
     
     ## ### Initialize dataframes
     ##  support_regr.csv
     df_support_init = pd.DataFrame(columns = X_train.columns.tolist())
     print(df_support_init)
-    df_support_init.to_csv(f"../results/support_regr_{name}.csv")
+    df_support_init.to_csv(f"../results/support_{model_type}_{name}.csv")
     
     # initialize permutation feature importances with selected features
     df_perm_featimp_init = pd.DataFrame(columns = X_train.columns.tolist())
     print(df_perm_featimp_init)
-    df_perm_featimp_init.to_csv(f"../results/perm_feature_importances_regr_{name}.csv")
+    df_perm_featimp_init.to_csv(f"../results/perm_feature_importances_{model_type}_{name}.csv")
 
     # # initialize feature_importances_regr.csv
     # these are based on training set (within model)
     df_featimp_init = pd.DataFrame(columns = X_train.columns.tolist())
     print(df_featimp_init)
-    df_featimp_init.to_csv(f"../results/feature_importances_regr_{name}.csv")
+    df_featimp_init.to_csv(f"../results/feature_importances_{model_type}_{name}.csv")
     
     return X_train, X_test, Y_train, Y_test,groups
 

@@ -1,4 +1,4 @@
-from core.util import n_iter, kfold, random_state, scoring_regr
+from core.util import n_iter, kfold, random_state
 import pandas as pd
 import core.util as util
 from time import perf_counter
@@ -13,23 +13,37 @@ import matplotlib.pyplot as plt
 import joblib
 ## Support vector machines
 
-def run_svm( X_new, X_test_new, Y_train, Y_test,Y_name,groups):
+def run_svm( X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     #将X，Y分为训练集和测试集
     print("Running SVM regression")
     model_name = "SVM"
 
-    # Define parameter grid
-    grid_pipe_svm = {'C': [0.01, 0.1, 1, 10],
-                'kernel': ["linear", "poly", "rbf", "sigmoid"],
-               'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10, "scale", "auto"]}
+    
     
 #    grid_svm_debug={'C': [0.01, 0.1, 1, 10], 'kernel': ["linear"]}
 
     # Set up model
-    model = svm.SVR()
+    if(model_type == "regr"):
+        model = svm.SVR()
+        # Define parameter grid
+        grid_pipe_svm = {'C': [0.01, 0.1, 1, 10],
+                'kernel': ["linear", "poly", "rbf", "sigmoid"],
+               'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10, "scale", "auto"]}
+        scoring = 'neg_mean_squared_error'  # Default scoring for regression
+    elif(model_type == "class"):
+        grid_pipe_svm = {'C': [0.1, 1, 10, 100],
+                'kernel': ['linear', 'rbf', 'poly', 'sigmoid'],
+                'gamma': ['scale', 'auto', 0.01, 0.1, 1],  # RBF/poly/sigmoid用
+                'degree': [2, 3, 4],  # 仅对 kernel='poly' 有效
+                'class_weight': [None, 'balanced']}
+        model = svm.SVC(probability=True)
+        scoring = 'roc_auc'  # Default scoring for classification
+    else:
+        raise ValueError("model_type must be 'regr' or 'class'")
+    
 
     # Randomized search:
-    svm_regr = RandomizedSearchCV(estimator = model, param_distributions = grid_pipe_svm, scoring = scoring_regr, 
+    svm_regr = RandomizedSearchCV(estimator = model, param_distributions = grid_pipe_svm, scoring = scoring, 
                                   n_iter = n_iter, cv = util.PseudoGroupCV(kfold,groups), verbose = 2, 
                                   random_state = random_state, n_jobs = -1)
     start = perf_counter()
@@ -40,7 +54,7 @@ def run_svm( X_new, X_test_new, Y_train, Y_test,Y_name,groups):
     print("Time: ", timedelta(seconds = stop -start))
 
     # Save results
-    best_results = util.save_results_cv_pipe(svm_regr, model_name, "regr", scoring_regr, Y_name,X_new)
+    best_results = util.save_results_cv_pipe(svm_regr, model_name, model_type, scoring, Y_name,X_new)
     print("Best results:")
     stop = perf_counter()
     print(best_results)
@@ -56,12 +70,12 @@ def run_svm( X_new, X_test_new, Y_train, Y_test,Y_name,groups):
 
     ### Run model on test set
     y_pred_test = svr.predict(X_test_new)
-    performance = util.calc_performance_regression2(Y_test, y_pred_test, model_name, Y_name,X_test_new)
+    performance = util.calc_performance_regression2(Y_test, y_pred_test, model_name, Y_name,X_test_new,model_type)
     print(performance)
 
     ### Calculate feature_importances
     start = perf_counter()
-    feat_imp_svm = util.calc_feature_importance(svr, X_test_new, Y_test, model_name, "regr", Y_name)
+    util.calc_feature_importance(svr, X_test_new, Y_test, model_name, model_type, Y_name)
     stop = perf_counter()
     print("Time: ", timedelta(seconds = stop-start))
 
