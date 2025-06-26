@@ -49,11 +49,9 @@ def feature_selection(X_train, Y_train, groups,model_type="regr",method="KPCA"):
      
   
         ### Save whether or not feature is selected (also for later use)
-        df_support = pd.read_csv(f"results/support_{model_type}.csv", index_col=0)
         support = pd.DataFrame(support.reshape(1,-1), columns=X_train.columns.to_list(),
                                                index=[f"{method}_{model_type}"])
-        df_support = pd.concat([df_support, support])
-        df_support.to_csv(f"results/support_EN_{model_type}.csv")
+        support.to_csv(f"results/support_EN_{model_type}.csv")
         ### end elastic net
         return selected_feat, model_fs  # 返回选择的特征和变换器
     elif(method == "KPCA"):
@@ -65,7 +63,8 @@ def feature_selection(X_train, Y_train, groups,model_type="regr",method="KPCA"):
         stop = perf_counter()
         print("KPCA time:", timedelta(seconds=stop - start))
         print(f"Reduced from {X_train.shape[1]} to {X_kpca.shape[1]} dimensions.")
-
+        support = pd.DataFrame(X_kpca, index=X_train.index, columns=[f"PC{i+1}" for i in range(X_kpca.shape[1])])
+        support.to_csv(f"results/support_KPCA_{model_type}.csv")
         return X_kpca, kpca  # 返回降维后的X 和变换器
     elif(method == "None"):
         print("No feature selection method specified, returning original features.")

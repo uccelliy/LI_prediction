@@ -7,12 +7,12 @@ import core.RF as RF
 import core.SVM as SVM
 import core.XGB as XGB
 import core.Stack as Stack
-import core.ENfeature as ENfeature
+import core.FeatureSelection as FS
 def run_models_for_behavior(behav_name, X, Y_all,model_type):
     """运行单个 behavior 的所有模型（RF/SVM/XGB 并行，Stack 最后）"""
     Y = Y_all
     X_train, X_test, Y_train, Y_test, groups = util.prepare_data(X, Y, behav_name,model_type)
-    X_train_new, transform = ENfeature.feature_selection(X_train, Y_train, groups, model_type=model_type, method="None")
+    X_train_new, transform = FS.feature_selection(X_train, Y_train, groups, model_type=model_type, method="None")
     if transform is None:
         print(f"No features selected for {behav_name}. Skipping...")
     else:
