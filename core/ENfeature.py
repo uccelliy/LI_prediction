@@ -51,7 +51,7 @@ def feature_selection(X_train, Y_train, groups,model_type="regr",method="KPCA"):
         selected_feat = np.array(feature_names)[support]
         print(selected_feat.shape)
         print(selected_feat)
-
+  
         ### Save whether or not feature is selected (also for later use)
         df_support = pd.read_csv(f"results/support_{model_type}.csv", index_col=0)
         support = pd.DataFrame(support.reshape(1,-1), columns=X_train.columns.to_list(),
@@ -59,7 +59,7 @@ def feature_selection(X_train, Y_train, groups,model_type="regr",method="KPCA"):
         df_support = pd.concat([df_support, support])
         df_support.to_csv(f"results/support_{model_type}.csv")
         ### end elastic net
-        return selected_feat
+        return selected_feat, model_fs  # 返回选择的特征和变换器
     elif(method == "KPCA"):
         print("Running KernelPCA for nonlinear dimensionality reduction...")
         kpca = KernelPCA(n_components=min(50, X_train.shape[1]), kernel='rbf', random_state=random_state)

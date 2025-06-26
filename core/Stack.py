@@ -1,5 +1,5 @@
 import core.util as util
-from core.util import n_iter, kfold, random_state, scoring_regr
+from core.util import n_iter, kfold, random_state
 import xgboost as xgb
 from sklearn.model_selection import RandomizedSearchCV
 from mlxtend.regressor import StackingCVRegressor
@@ -18,7 +18,20 @@ def run_stack(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     xgb_mod=joblib.load(f'xgb_{Y_name}.pkl')
 
 # Define parameter grid
-    grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
+    if (model_type == "regr"):
+        scoring = 'neg_mean_squared_error'
+        grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
+                'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
+                'gamma': [i/10 for i in range(0,6)],
+                'max_depth': list(range(2, 16)),
+                'min_child_weight': list(range(1,11)),
+                'subsample': [x/10 for x in range(2, 11)],
+                'colsample_bytree': [x/10 for x in range(2, 11)],
+                'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+                'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5]}
+    elif (model_type == "class"):
+        scoring = 'roc_auc'
+        grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
                 'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
                 'gamma': [i/10 for i in range(0,6)],
                 'max_depth': list(range(2, 16)),
@@ -31,7 +44,7 @@ def run_stack(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 # Randomized search:
     grid_search_meta = RandomizedSearchCV(estimator = f_clf,
                                 param_distributions  = grid_pipe_xgb,
-                                scoring = scoring_regr,
+                                scoring = scoring,
                                 cv = util.PseudoGroupCV(kfold,groups),
                                 verbose = 2, random_state = random_state,
                                 n_jobs = -1, n_iter=n_iter)
@@ -50,12 +63,12 @@ def run_stack(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     print("Time: ", timedelta(seconds = stop -start))
 
     # Save results
-    best_results_stack = util.save_results_cv_pipe(grid_search_meta, model_name, model_type, scoring_regr,Y_name,X_new)
+    best_results_stack = util.save_results_cv_pipe(grid_search_meta, model_name, model_type, scoring,Y_name,X_new)
     print("Best results:")
     print(best_results_stack)
 
     ### Run model on test set
     y_pred_test = stack_pipeline.predict(X_test_new)
-    performance = util.calc_performance_regression2(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type)
+    performance = util.calc_performance(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type)
     print(performance)
 

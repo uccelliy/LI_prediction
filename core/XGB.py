@@ -28,7 +28,7 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
                 'colsample_bytree': [x/10 for x in range(2, 11)],
                 'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
                 'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5]}
-        scoring=' neg_mean_squared_error'  # Default scoring for regression
+        scoring='neg_mean_squared_error'  # Default scoring for regression
     elif(model_type == "class"):
         model = xgb.XGBClassifier(random_state=random_state)
         grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
@@ -74,7 +74,7 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     joblib.dump(xgb_mod, f'xgb_{Y_name}.pkl')
     ### Run model on test set
     y_pred_test = xgb_mod.predict(X_test_new)
-    performance = util.calc_performance_regression2(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type)
+    performance = util.calc_performance(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type)
     print(performance)
 
     ### Calculate feature_importances

@@ -68,7 +68,7 @@ def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 
     ### Run model on test set
     y_pred_test = rf.predict(X_test_new)
-    performance = util.calc_performance_regression2(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type)
+    performance = util.calc_performance(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type)
     print(performance)
 
     ### Calculate feature_importances

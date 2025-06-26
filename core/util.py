@@ -5,7 +5,7 @@ from sklearn.inspection import permutation_importance
 from sklearn.model_selection import GroupKFold,KFold
 import numpy as np
 from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score,accuracy_score, roc_auc_score, f1_score
 
 # Define parameters random search + resampling
 n_iter = 100
@@ -67,7 +67,7 @@ def save_results_cv_pipe(model_random, model_name, model_type, scoring,Y_name,X_
     return best
 
 # Function to calculate 95% bootstrap interval
-def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2, n_bootstraps=10000):
+def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,model_type, n_bootstraps=10000,threshold=5):
     """
     computes metric on bootstrap samples, calculates 95% confidence interval
     function: e.g. mean_squared_error, roc_auc_score, r2_score, etc.
@@ -78,6 +78,7 @@ def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2, n_bootstraps=
     bs_replicates1 = np.empty(n_bootstraps)
     bs_replicates2 = np.empty(n_bootstraps)
     bs_replicates3 = np.empty(n_bootstraps)
+    bs_replicates4 = np.empty(n_bootstraps)
 
     # Create bootstrap replicates as much as size
     for i in range(n_bootstraps):
@@ -85,43 +86,66 @@ def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2, n_bootstraps=
         
         y_true_bs = y_true.to_numpy()[idx_bs]
         y_pred_bs = y_pred[idx_bs]
+        if model_type=="regr":
+            if function1 == mean_squared_error:
+                bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
+            else:
+                bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
+                bs_replicates3[i] = 1 - ((1 - bs_replicates1[i]) * (X_test_new.shape[0] - 1)) / (X_test_new.shape[0] - X_test_new.shape[1] - 1)
 
-        if function1 == mean_squared_error:
-            bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
-        else:
-            bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
-            bs_replicates3[i] = 1 - ((1 - bs_replicates1[i]) * (X_test_new.shape[0] - 1)) / (X_test_new.shape[0] - X_test_new.shape[1] - 1)
+            if function2 == mean_squared_error:
+                bs_replicates2[i] = function2(y_true_bs, y_pred_bs)
+            else:
+                bs_replicates2[i] = function2(y_true_bs, y_pred_bs)
 
-        if function2 == mean_squared_error:
+            if function2 == mean_squared_error:
+                bs_replicates4[i] = function3(y_true_bs, y_pred_bs)
+            else:
+                bs_replicates4[i] = function3(y_true_bs, y_pred_bs)
+        elif model_type == "class":
+            bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
             bs_replicates2[i] = function2(y_true_bs, y_pred_bs)
-        else:
-            bs_replicates2[i] = function2(y_true_bs, y_pred_bs)
+            bs_replicates3[i] = function3(y_true_bs, y_pred_bs)
+
 
     # Get 95% confidence interval
-    ci_lower1 = np.percentile(bs_replicates1, 2.5)
-    ci_upper1 = np.percentile(bs_replicates1, 97.5)
+    ci_lower1 = np.percentile(bs_replicates1, threshold)
+    ci_upper1 = np.percentile(bs_replicates1, (100 - threshold))
 
-    ci_lower2 = np.percentile(bs_replicates2, 2.5)
-    ci_upper2 = np.percentile(bs_replicates2, 97.5)
+    ci_lower2 = np.percentile(bs_replicates2, threshold)
+    ci_upper2 = np.percentile(bs_replicates2, (100 - threshold))
 
-    ci_lower3 = np.percentile(bs_replicates3, 2.5)
-    ci_upper3 = np.percentile(bs_replicates3, 97.5)
+    ci_lower3 = np.percentile(bs_replicates3, threshold)
+    ci_upper3 = np.percentile(bs_replicates3, (100 - threshold))
+    
+    ci_lower4 = np.percentile(bs_replicates4, threshold)
+    ci_upper4 = np.percentile(bs_replicates4, (100 - threshold))
+    
+    result_list = [ci_lower1, ci_upper1, ci_lower2, ci_upper2, ci_lower3, ci_upper3,ci_lower4, ci_upper4]
 
-    return ci_lower1, ci_upper1, bs_replicates1, ci_lower2, ci_upper2, bs_replicates2, ci_lower3, ci_upper3
+    return result_list
 
 def rmse_func(y_true, y_pred):
     return np.sqrt(mean_squared_error(y_true, y_pred))
 
 # Define function to calculate performance measures regression
-def calc_performance_regression2(y_test, y_pred, model_name, Y_name,X_test_new,model_type):
-    r2 = r2_score(y_test, y_pred)
-    adjusted_r2 = 1 - ((1 - r2) * (X_test_new.shape[0] - 1)) / (X_test_new.shape[0] - X_test_new.shape[1] - 1)
-    mae = mean_absolute_error(y_test, y_pred)
-    rmse = rmse_func(y_test, y_pred)
-    ci_lower1, ci_upper1, _, ci_lower2, ci_upper2, _, ci_lower3, ci_upper3 = bootstrap_CI2(X_test_new,y_test, y_pred, r2_score, rmse_func)
-
-    performance = [r2, ci_lower1, ci_upper1, mae, rmse,ci_lower2, ci_upper2, adjusted_r2, ci_lower3, ci_upper3]
-
+def calc_performance(y_test, y_pred, model_name, Y_name,X_test_new,model_type):
+    if model_type not in ["regr", "class"]:
+        raise ValueError("model_type must be 'regr' or 'class'")
+    elif model_type == "regr":
+        r2 = r2_score(y_test, y_pred)
+        adjusted_r2 = 1 - ((1 - r2) * (X_test_new.shape[0] - 1)) / (X_test_new.shape[0] - X_test_new.shape[1] - 1)
+        mae = mean_absolute_error(y_test, y_pred)
+        rmse = rmse_func(y_test, y_pred)
+        corr =  np.corrcoef(y_test, y_pred)[0, 1]
+        result_list_tmp = bootstrap_CI2(X_test_new,y_test, y_pred, r2_score, rmse_func,np.corrcoef,"regr")
+        performance = [r2, result_list_tmp[0], result_list_tmp[1], mae, rmse,result_list_tmp[2], result_list_tmp[3], adjusted_r2, result_list_tmp[4], result_list_tmp[5],corr, result_list_tmp[6], result_list_tmp[7]]
+    elif model_type == "class":
+        accuracy = accuracy_score(y_test, y_pred)
+        roc = roc_auc_score(y_test, y_pred)
+        f1 = f1_score(y_test, y_pred, average='weighted')
+        result_list_tmp = bootstrap_CI2(X_test_new,y_test, y_pred, accuracy_score, roc_auc_score,f1_score,"class")
+        performance = [accuracy, result_list_tmp[0], result_list_tmp[1], roc, result_list_tmp[2], result_list_tmp[3], f1, result_list_tmp[4], result_list_tmp[5]]
     # save performance
     df_perf = pd.read_csv(f"../results/performance_{model_type}_{Y_name}.csv", index_col=0)
     perf = pd.DataFrame([performance], columns=df_perf.columns.tolist(), index=[f"{model_name}_{model_type}"])
