@@ -53,7 +53,7 @@ def feature_selection(X_train, Y_train, groups,model_type="regr",method="KPCA"):
         support = pd.DataFrame(support.reshape(1,-1), columns=X_train.columns.to_list(),
                                                index=[f"{method}_{model_type}"])
         df_support = pd.concat([df_support, support])
-        df_support.to_csv(f"results/support_{model_type}.csv")
+        df_support.to_csv(f"results/support_EN_{model_type}.csv")
         ### end elastic net
         return selected_feat, model_fs  # 返回选择的特征和变换器
     elif(method == "KPCA"):
