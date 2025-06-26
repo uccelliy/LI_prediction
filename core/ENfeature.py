@@ -39,18 +39,14 @@ def feature_selection(X_train, Y_train, groups,model_type="regr",method="KPCA"):
         en_regr_pipe.fit(X_train, Y_train.values.ravel())
         stop = perf_counter()
         print("Time: ", timedelta(seconds = stop -start))
-        best_results_pipe = util.save_results_cv_pipe(en_regr_pipe, method, model_type, scoring)
-        print("Best results:")
-        print(best_results_pipe)
-        print(en_regr_pipe.best_estimator_)
-
+        util.save_results_cv_pipe(en_regr_pipe, method, model_type, scoring)
+        
         # Get selected features
         model_fs = SelectFromModel(en_regr_pipe.best_estimator_, prefit=True)
         support = model_fs.get_support()
         feature_names = en_regr_pipe.feature_names_in_
         selected_feat = np.array(feature_names)[support]
-        print(selected_feat.shape)
-        print(selected_feat)
+     
   
         ### Save whether or not feature is selected (also for later use)
         df_support = pd.read_csv(f"results/support_{model_type}.csv", index_col=0)
