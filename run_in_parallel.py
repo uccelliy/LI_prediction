@@ -12,8 +12,11 @@ def run_models_for_behavior(behav_name, X, Y_all,model_type):
     """运行单个 behavior 的所有模型（RF/SVM/XGB 并行，Stack 最后）"""
     Y = Y_all
     X_train, X_test, Y_train, Y_test, groups = util.prepare_data(X, Y, behav_name,model_type)
-    X_train_new, transform = ENfeature.feature_selection(X_train, Y_train, groups, model_type=model_type, method="EN")
-    X_test_new = transform.transform(X_test)
+    X_train_new, transform = ENfeature.feature_selection(X_train, Y_train, groups, model_type=model_type, method="None")
+    if transform is None:
+        print(f"No features selected for {behav_name}. Skipping...")
+    else:
+        X_test_new = transform.transform(X_test)
     # 初始化结果文件
     df_best_init = pd.DataFrame(columns = ["n_iter", "cv", "scoring", "best score", "best params"])
     df_best_init.to_csv(f'../results/best_tuning_{behav_name}.csv')

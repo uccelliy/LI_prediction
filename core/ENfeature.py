@@ -71,6 +71,9 @@ def feature_selection(X_train, Y_train, groups,model_type="regr",method="KPCA"):
         print(f"Reduced from {X_train.shape[1]} to {X_kpca.shape[1]} dimensions.")
 
         return X_kpca, kpca  # 返回降维后的X 和变换器
+    elif(method == "None"):
+        print("No feature selection method specified, returning original features.")
+        return X_train, None
     else:
         raise ValueError("Invalid input")   
     # Tuning elastic net
