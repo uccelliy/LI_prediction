@@ -15,25 +15,26 @@ import joblib
 ### Random forest regression
 def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     print("Running RF regression")
-    #将X，Y分为训练集和测试集
-# Set up model
+  
+
+
     model_name = "RF"
     if(model_type == "regr"):
         model = RandomForestRegressor(random_state = random_state)
-        grid_rf = {'n_estimators': list(range(100, 1100, 100)), # Nr of trees
-               'max_features': list(range(4, 32)), # Number of features to consider at every split
-               'max_depth': list(range(2, 15)), # Max depth of tree
-               'min_samples_split': list(range(2 ,11)), # Minimum number of samples required to split a node
-               'min_samples_leaf': list(range(1 ,11))} # Minimum number of samples required at each leaf node
+#        grid_rf = {'n_estimators': list(range(100, 1100, 100)), # Nr of trees
+#               'max_features': list(range(4, 32)), # Number of features to consider at every split
+#               'max_depth': list(range(2, 15)), # Max depth of tree
+#               'min_samples_split': list(range(2 ,11)), # Minimum number of samples required to split a node
+#               'min_samples_leaf': list(range(1 ,11))} # Minimum number of samples required at each leaf node
         scoring = 'neg_mean_squared_error'  # Default scoring for regression
     elif(model_type == "class"):
         model = RandomForestClassifier(random_state = random_state)
-        grid_rf = {'n_estimators': list(range(100, 1100, 100)), # Nr of trees
-               'max_features': list(range(4, 32)), # Number of features to consider at every split
-               'max_depth': list(range(2, 15)), # Max depth of tree
-               'min_samples_split': list(range(2 ,11)), # Minimum number of samples required to split a node
-               'min_samples_leaf': list(range(1 ,11)),
-               'class_weight': [None, 'balanced']} 
+#        grid_rf = {'n_estimators': list(range(100, 1100, 100)), # Nr of trees
+#               'max_features': list(range(4, 32)), # Number of features to consider at every split
+#               'max_depth': list(range(2, 15)), # Max depth of tree
+#               'min_samples_split': list(range(2 ,11)), # Minimum number of samples required to split a node
+#               'min_samples_leaf': list(range(1 ,11)),
+#               'class_weight': [None, 'balanced']} 
         scoring = 'roc_auc'  # Default scoring for classification
     else:
         raise ValueError("model_type must be 'regr' or 'class'")
@@ -41,9 +42,9 @@ def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     # Define parameter grid
     
 
-#    grid_rf_debug={'n_estimators': list(range(100, 1100, 100)),'max_depth': list(range(2, 15))}
+    grid_rf_debug={'n_estimators': list(range(100, 1100, 100)),'max_depth': list(range(2, 15))}
     # Randomized search:
-    rf_regr_pipe_test = RandomizedSearchCV(estimator = model, param_distributions = grid_rf, scoring = scoring, 
+    rf_regr_pipe_test = RandomizedSearchCV(estimator = model, param_distributions = grid_rf_debug, scoring = scoring, 
                                            n_iter = n_iter, cv = util.PseudoGroupCV(kfold,groups), verbose = 0, 
                                            random_state = random_state, n_jobs = -1)
     start = perf_counter()

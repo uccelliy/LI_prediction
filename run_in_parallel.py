@@ -15,6 +15,7 @@ def run_models_for_behavior(behav_name, X, Y_all,model_type):
     X_train_new, transform = FS.feature_selection(X_train, Y_train, groups, model_type=model_type, method="None")
     if transform is None:
         print(f"No features selected for {behav_name}. Skipping...")
+        X_test_new = X_test # 如果没有特征选择，直接使用原始测试集
     else:
         X_test_new = transform.transform(X_test)
     # 初始化结果文件

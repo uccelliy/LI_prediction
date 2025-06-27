@@ -13,34 +13,34 @@ import matplotlib.pyplot as plt
 import joblib
 ### XGBoost regression
 def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
-    #将X，Y分为训练集和测试集
+   
     print("Running XGBoost regression")
 # Set up model
     model_name = "XGB"
     if(model_type == "regr"):
         model = xgb.XGBRegressor(random_state=random_state)
-        grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
-                'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
-                'gamma': [i/10 for i in range(0,6)],
-                'max_depth': list(range(2, 16)),
-                'min_child_weight': list(range(1,11)),
-                'subsample': [x/10 for x in range(2, 11)],
-                'colsample_bytree': [x/10 for x in range(2, 11)],
-                'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
-                'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5]}
+#        grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
+#                'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
+#                'gamma': [i/10 for i in range(0,6)],
+#                'max_depth': list(range(2, 16)),
+#                'min_child_weight': list(range(1,11)),
+#                'subsample': [x/10 for x in range(2, 11)],
+#                'colsample_bytree': [x/10 for x in range(2, 11)],
+#                'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+#                'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5]}
         scoring='neg_mean_squared_error'  # Default scoring for regression
     elif(model_type == "class"):
         model = xgb.XGBClassifier(random_state=random_state)
-        grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
-            'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
-            'gamma': [i/10 for i in range(0,6)],
-            'max_depth': list(range(2, 16)),
-            'min_child_weight': list(range(1,11)),
-            'subsample': [x/10 for x in range(2, 11)],
-            'colsample_bytree': [x/10 for x in range(2, 11)],
-            'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
-            'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
-            'scale_pos_weight': [1, 2, 5]}
+#        grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
+#            'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
+#            'gamma': [i/10 for i in range(0,6)],
+#            'max_depth': list(range(2, 16)),
+#            'min_child_weight': list(range(1,11)),
+#            'subsample': [x/10 for x in range(2, 11)],
+#            'colsample_bytree': [x/10 for x in range(2, 11)],
+#            'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+#            'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+#            'scale_pos_weight': [1, 2, 5]}
         scoring = 'roc_auc'
     else:
         raise ValueError("model_type must be 'regr' or 'class'")
@@ -48,8 +48,8 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     # Define parameter grid 
    
 
-#    grid_xgb_debug={'n_estimators': list(range(100, 1100, 100)),'max_depth': list(range(2, 15))}
-    xgb_regr = RandomizedSearchCV(estimator = model, param_distributions = grid_pipe_xgb, 
+    grid_xgb_debug={'n_estimators': list(range(100, 1100, 100)),'max_depth': list(range(2, 15))}
+    xgb_regr = RandomizedSearchCV(estimator = model, param_distributions = grid_xgb_debug, 
                                   scoring = scoring, n_iter = n_iter, 
                                   cv = util.PseudoGroupCV(kfold,groups), 
                                   verbose = 0, random_state = random_state, n_jobs = -1)

@@ -67,7 +67,7 @@ def save_results_cv_pipe(model_random, model_name, model_type, scoring,Y_name,X_
     return best
 
 # Function to calculate 95% bootstrap interval
-def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,model_type, n_bootstraps=10000,threshold=5):
+def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,model_type, sample_type = 'permutation' ,n_times=10000,threshold=0.05):
     """
     computes metric on bootstrap samples, calculates 95% confidence interval
     function: e.g. mean_squared_error, roc_auc_score, r2_score, etc.
@@ -75,17 +75,21 @@ def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,mode
     returns: lower boundary, upper boundary, bootstrap replicates
     """
 
-    bs_replicates1 = np.empty(n_bootstraps)
-    bs_replicates2 = np.empty(n_bootstraps)
-    bs_replicates3 = np.empty(n_bootstraps)
-    bs_replicates4 = np.empty(n_bootstraps)
-
+    bs_replicates1 = np.empty(n_times)
+    bs_replicates2 = np.empty(n_times)
+    bs_replicates3 = np.empty(n_times)
+    bs_replicates4 = np.empty(n_times)
+    
     # Create bootstrap replicates as much as size
-    for i in range(n_bootstraps):
-        idx_bs = np.random.choice(np.arange(len(y_pred)), size=len(y_pred))
-        
-        y_true_bs = y_true.to_numpy()[idx_bs]
-        y_pred_bs = y_pred[idx_bs]
+    for i in range(n_times):
+        if sample_type == 'bootstrap':
+            idx_bs = np.random.choice(np.arange(len(y_pred)), size=len(y_pred))
+            y_true_bs = y_true.to_numpy()[idx_bs].ravel()
+            y_pred_bs = y_pred[idx_bs].ravel()
+        elif sample_type == 'permutation':
+            idx_bs = np.random.permutation(np.arange(len(y_pred)))
+            y_true_bs = y_true.ravel()
+            y_pred_bs = y_pred[idx_bs].ravel()
         if model_type=="regr":
             if function1 == mean_squared_error:
                 bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
@@ -101,7 +105,7 @@ def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,mode
             if function2 == mean_squared_error:
                 bs_replicates4[i] = function3(y_true_bs, y_pred_bs)
             else:
-                bs_replicates4[i] = function3(y_true_bs, y_pred_bs)
+                bs_replicates4[i] = function3(y_true_bs, y_pred_bs)[0,1]
         elif model_type == "class":
             bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
             bs_replicates2[i] = function2(y_true_bs, y_pred_bs)
@@ -137,7 +141,7 @@ def calc_performance(y_test, y_pred, model_name, Y_name,X_test_new,model_type):
         adjusted_r2 = 1 - ((1 - r2) * (X_test_new.shape[0] - 1)) / (X_test_new.shape[0] - X_test_new.shape[1] - 1)
         mae = mean_absolute_error(y_test, y_pred)
         rmse = rmse_func(y_test, y_pred)
-        corr =  np.corrcoef(y_test, y_pred)[0, 1]
+        corr =  np.corrcoef(np.ravel(y_test), np.ravel(y_pred))[0, 1]
         result_list_tmp = bootstrap_CI2(X_test_new,y_test, y_pred, r2_score, rmse_func,np.corrcoef,"regr")
         performance = [r2, result_list_tmp[0], result_list_tmp[1], mae, rmse,result_list_tmp[2], result_list_tmp[3], adjusted_r2, result_list_tmp[4], result_list_tmp[5],corr, result_list_tmp[6], result_list_tmp[7]]
     elif model_type == "class":
