@@ -10,12 +10,12 @@ import core.FeatureSelection as FS
 
 
 # Read in the data
-model_type = "class"
+model_type = "regr"
 os.chdir(os.path.dirname(__file__))
 input_file = 'C:/Users/77260/Desktop/111/dti_5e6.txt'
 X = pd.read_csv(input_file, sep="\t", decimal='.', encoding='cp1252')
 print(X.shape)
-input_file4 = 'C:/Users/77260/Desktop/111/class_test.txt'
+input_file4 = 'C:/Users/77260/Desktop/111/regr_test.txt'
 Y_all = pd.read_csv(input_file4, sep="\t", decimal='.', encoding='cp1252')
 print(Y_all.shape)
 behaviors = Y_all.columns[2:]  # 跳过前两列（假设前两列非目标变量）
@@ -26,7 +26,8 @@ for behav_name in behaviors:
     
     Y=Y_all[["IID","FID",behav_name]]
     X_train, X_test, Y_train, Y_test, groups = util.prepare_data(X, Y, behav_name,model_type)
-    X_train_new, transform = FS.feature_selection(X_train, Y_train, groups, model_type=model_type, method="None")
+    X_train_new, transform = FS.feature_selection(X_train, Y_train, groups, model_type=model_type)
+    util.result_file_init(X_train_new,model_type,behav_name)
     if transform is None:
         print(f"No features selected for {behav_name}. Skipping...")
         X_test_new = X_test # 如果没有特征选择，直接使用原始测试集

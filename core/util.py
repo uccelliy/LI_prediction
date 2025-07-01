@@ -8,7 +8,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score,accuracy_score, roc_auc_score, f1_score,balanced_accuracy_score
 
 # Define parameters random search + resampling
-n_iter = 100
+n_iter = 1000
 cv = 10
 random_state = 42
 kfold = GroupKFold(n_splits=cv)
@@ -297,6 +297,11 @@ def prepare_data(data1,data2,name,model_type="regr"):
     df_support_init.to_csv(f"../results/support_{model_type}_{name}.csv")
     
     # initialize permutation feature importances with selected features
+
+    
+    return X_train, X_test, Y_train, Y_test,groups
+
+def result_file_init(X_train,model_type, name):
     df_perm_featimp_init = pd.DataFrame(columns = X_train.columns.tolist())
     print(df_perm_featimp_init)
     df_perm_featimp_init.to_csv(f"../results/perm_feature_importances_{model_type}_{name}.csv")
@@ -307,7 +312,6 @@ def prepare_data(data1,data2,name,model_type="regr"):
     print(df_featimp_init)
     df_featimp_init.to_csv(f"../results/feature_importances_{model_type}_{name}.csv")
     
-    return X_train, X_test, Y_train, Y_test,groups
 
 #不能在这里分训练集和测试集，应该是分好，传入模型,传入的Y也是一个矩阵，我们要对每一列分别处理，并且把每一列的结果分别保存下来
 
