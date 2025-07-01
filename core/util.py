@@ -5,7 +5,7 @@ from sklearn.inspection import permutation_importance
 from sklearn.model_selection import GroupKFold,KFold
 import numpy as np
 from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score,accuracy_score, roc_auc_score, f1_score
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score,accuracy_score, roc_auc_score, f1_score,balanced_accuracy_score
 
 # Define parameters random search + resampling
 n_iter = 100
@@ -67,7 +67,7 @@ def save_results_cv_pipe(model_random, model_name, model_type, scoring,Y_name,X_
     return best
 
 # Function to calculate 95% bootstrap interval
-def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,model_type, sample_type = 'permutation' ,n_times=10000,threshold=0.05):
+def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,model_type ,n_times=10000,threshold=5):
     """
     computes metric on bootstrap samples, calculates 95% confidence interval
     function: e.g. mean_squared_error, roc_auc_score, r2_score, etc.
@@ -82,14 +82,10 @@ def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,mode
     
     # Create bootstrap replicates as much as size
     for i in range(n_times):
-        if sample_type == 'bootstrap':
-            idx_bs = np.random.choice(np.arange(len(y_pred)), size=len(y_pred))
-            y_true_bs = y_true.to_numpy()[idx_bs].ravel()
-            y_pred_bs = y_pred[idx_bs].ravel()
-        elif sample_type == 'permutation':
-            idx_bs = np.random.permutation(np.arange(len(y_pred)))
-            y_true_bs = y_true.ravel()
-            y_pred_bs = y_pred[idx_bs].ravel()
+        idx_bs = np.random.choice(np.arange(len(y_pred)), size=len(y_pred))
+        y_true_bs = y_true.to_numpy()[idx_bs].ravel()
+        y_pred_bs = y_pred[idx_bs].ravel()
+        
         if model_type=="regr":
             if function1 == mean_squared_error:
                 bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
@@ -109,7 +105,8 @@ def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,mode
         elif model_type == "class":
             bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
             bs_replicates2[i] = function2(y_true_bs, y_pred_bs)
-            bs_replicates3[i] = function3(y_true_bs, y_pred_bs)
+            bs_replicates3[i] = balanced_accuracy_score(y_true_bs, y_pred_bs)
+            bs_replicates4[i] = function3(y_true_bs, y_pred_bs)
 
 
     # Get 95% confidence interval
@@ -129,6 +126,57 @@ def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,mode
 
     return result_list
 
+def permutation_CI2(X_test_new,y_true, y_pred, score1,score2,score3,score4,function1, function2,function3,model_type ,n_times=10000):
+    """
+    computes metric on bootstrap samples, calculates 95% confidence interval
+    function: e.g. mean_squared_error, roc_auc_score, r2_score, etc.
+
+    returns: lower boundary, upper boundary, bootstrap replicates
+    """
+
+    bs_replicates1 = np.empty(n_times)
+    bs_replicates2 = np.empty(n_times)
+    bs_replicates3 = np.empty(n_times)
+    bs_replicates4 = np.empty(n_times)
+    
+    # Create bootstrap replicates as much as size
+    for i in range(n_times):
+        idx_bs = np.random.permutation(np.arange(len(y_pred)))
+        y_true_bs = y_true.to_numpy()[idx_bs].ravel()
+        y_pred_bs = y_pred.ravel()
+        if model_type=="regr":
+            if function1 == mean_squared_error:
+                bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
+            else:
+                bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
+                bs_replicates3[i] = 1 - ((1 - bs_replicates1[i]) * (X_test_new.shape[0] - 1)) / (X_test_new.shape[0] - X_test_new.shape[1] - 1)
+
+            if function2 == mean_squared_error:
+                bs_replicates2[i] = function2(y_true_bs, y_pred_bs)
+            else:
+                bs_replicates2[i] = function2(y_true_bs, y_pred_bs)
+
+            if function2 == mean_squared_error:
+                bs_replicates4[i] = function3(y_true_bs, y_pred_bs)
+            else:
+                bs_replicates4[i] = function3(y_true_bs, y_pred_bs)[0,1]
+        elif model_type == "class":
+            bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
+            bs_replicates2[i] = function2(y_true_bs, y_pred_bs)
+            bs_replicates3[i] = balanced_accuracy_score(y_true_bs, y_pred_bs)
+            bs_replicates4[i] = function3(y_true_bs, y_pred_bs)
+
+        p1 = np.mean(bs_replicates1 >= score1)
+        p2 = np.mean(bs_replicates2 >= score2)
+        p3 = np.mean(bs_replicates3 >= score3)
+        p4 = np.mean(bs_replicates4 >= score4)
+    # Get 95% confidence interval
+    
+    
+    result_list = [p1,p2,p3,p4]
+
+    return result_list
+
 def rmse_func(y_true, y_pred):
     return np.sqrt(mean_squared_error(y_true, y_pred))
 
@@ -142,14 +190,15 @@ def calc_performance(y_test, y_pred, model_name, Y_name,X_test_new,model_type):
         mae = mean_absolute_error(y_test, y_pred)
         rmse = rmse_func(y_test, y_pred)
         corr =  np.corrcoef(np.ravel(y_test), np.ravel(y_pred))[0, 1]
-        result_list_tmp = bootstrap_CI2(X_test_new,y_test, y_pred, r2_score, rmse_func,np.corrcoef,"regr")
-        performance = [r2, result_list_tmp[0], result_list_tmp[1], mae, rmse,result_list_tmp[2], result_list_tmp[3], adjusted_r2, result_list_tmp[4], result_list_tmp[5],corr, result_list_tmp[6], result_list_tmp[7]]
+        result_list_tmp = permutation_CI2(X_test_new,y_test, y_pred, r2,rmse,adjusted_r2,corr,r2_score, rmse_func,np.corrcoef,"regr")
+        performance = [r2, result_list_tmp[0], mae, rmse,result_list_tmp[1], adjusted_r2, result_list_tmp[2],corr, result_list_tmp[3]]
     elif model_type == "class":
         accuracy = accuracy_score(y_test, y_pred)
         roc = roc_auc_score(y_test, y_pred)
         f1 = f1_score(y_test, y_pred, average='weighted')
-        result_list_tmp = bootstrap_CI2(X_test_new,y_test, y_pred, accuracy_score, roc_auc_score,f1_score,"class")
-        performance = [accuracy, result_list_tmp[0], result_list_tmp[1], roc, result_list_tmp[2], result_list_tmp[3], f1, result_list_tmp[4], result_list_tmp[5]]
+        balanced_accuracy= balanced_accuracy_score(y_test, y_pred)
+        result_list_tmp = permutation_CI2(X_test_new,y_test, y_pred, accuracy,roc,balanced_accuracy,f1,accuracy_score, roc_auc_score,f1_score,"class")
+        performance = [accuracy, result_list_tmp[0] ,roc, result_list_tmp[1], balanced_accuracy, result_list_tmp[2],f1, result_list_tmp[3]]
     # save performance
     df_perf = pd.read_csv(f"../results/performance_{model_type}_{Y_name}.csv", index_col=0)
     perf = pd.DataFrame([performance], columns=df_perf.columns.tolist(), index=[f"{model_name}_{model_type}"])

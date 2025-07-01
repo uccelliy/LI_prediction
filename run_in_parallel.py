@@ -25,10 +25,10 @@ def run_models_for_behavior(behav_name, X, Y_all,model_type):
 
     # performance_regr.csv
     if model_type == "regr":
-        df_perf_init = pd.DataFrame(columns = ["r2", "ci_lower1", "ci_upper1", "mae", "rmse", "ci_lower2", "ci_upper2", "adj_r2", "ci_lower3", "ci_upper3","r", "ci_lower4", "ci_upper4"])
+        df_perf_init = pd.DataFrame(columns = ["r2", "p1", "mae", "rmse", "p2", "adj_r2", "p3","r", "p4"])
         df_perf_init.to_csv(f'../results/performance_regr_{behav_name}.csv')
     elif model_type == "class":
-        df_perf_init = pd.DataFrame(columns = ["accuracy", "ci_lower1", "ci_upper1", "f1", "ci_lower2", "ci_upper2", "roc_auc", "ci_lower3", "ci_upper3"])
+        df_perf_init = pd.DataFrame(columns = ["accuracy", "p1", "roc_auc","p2","balance_acc","p3","f1","p4"])
         df_perf_init.to_csv(f'../results/performance_class_{behav_name}.csv')
 
     # 并行运行 RF/SVM/XGB
