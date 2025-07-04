@@ -37,7 +37,7 @@ def run_svm( X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 #                'degree': [2, 3, 4],  # 仅对 kernel='poly' 有效
 #                 'class_weight': [None, 'balanced']}
         model = svm.SVC(probability=True)
-        scoring = 'roc_auc_ovr'  # Default scoring for classification
+        scoring = 'accuracy'  # Default scoring for classification
     else:
         raise ValueError("model_type must be 'regr' or 'class'")
     

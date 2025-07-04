@@ -11,7 +11,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import joblib
-### XGBoost regression
+from sklearn.preprocessing import LabelEncoder as LE
 def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
    
     print("Running XGBoost regression")
@@ -41,7 +41,9 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 #            'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
 #            'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
 #            'scale_pos_weight': [1, 2, 5]}
-        scoring = 'roc_auc_ovr'
+        scoring = 'accuracy'  # Default scoring for classification
+        Y_train = LE().fit_transform(Y_train)  # Encode labels for classification
+        Y_test = LE().fit_transform(Y_test)  # Encode labels for classification
     else:
         raise ValueError("model_type must be 'regr' or 'class'")
 

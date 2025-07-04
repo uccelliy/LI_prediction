@@ -35,7 +35,7 @@ def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 #               'min_samples_split': list(range(2 ,11)), # Minimum number of samples required to split a node
 #               'min_samples_leaf': list(range(1 ,11)),
 #               'class_weight': [None, 'balanced']} 
-        scoring = 'roc_auc_ovr'  # Default scoring for classification
+        scoring = 'accuracy'  # Default scoring for classification
     else:
         raise ValueError("model_type must be 'regr' or 'class'")
     

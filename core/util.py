@@ -4,11 +4,11 @@ import pandas as pd
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import GroupKFold,KFold
 import numpy as np
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import cohen_kappa_score, mean_squared_error
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score,accuracy_score, roc_auc_score, f1_score,balanced_accuracy_score
 
 # Define parameters random search + resampling
-n_iter = 1000
+n_iter = 100
 cv = 10
 random_state = 42
 kfold = GroupKFold(n_splits=cv)
@@ -51,11 +51,7 @@ def save_results_cv_pipe(model_random, model_name, model_type, scoring,Y_name,X_
             file_extension = "_child"
         else:
             file_extension = ""
-
-        if model_type == "class":
-            gini_imp = model_random.best_estimator_.steps[2][1].feature_importances_
-        else:
-            gini_imp = model_random.best_estimator_.feature_importances_
+        gini_imp = model_random.best_estimator_.feature_importances_
         gini_imp_scaled = (gini_imp - np.min(gini_imp)) / (np.max(gini_imp) - np.min(gini_imp))
         df_featimp = pd.read_csv(f"../results/feature_importances_{model_type}{file_extension}_{Y_name}.csv", index_col=0)
         feature_importances = pd.DataFrame([gini_imp, gini_imp_scaled], columns=X_new.columns.to_list(),
@@ -164,12 +160,12 @@ def permutation_CI2(X_test_new,y_true, y_pred, score1,score2,score3,score4,funct
             bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
             bs_replicates2[i] = function2(y_true_bs, y_pred_bs)
             bs_replicates3[i] = balanced_accuracy_score(y_true_bs, y_pred_bs)
-            bs_replicates4[i] = function3(y_true_bs, y_pred_bs)
+            bs_replicates4[i] = function3(y_true_bs, y_pred_bs, average='weighted')
 
-        p1 = np.mean(bs_replicates1 >= score1)
-        p2 = np.mean(bs_replicates2 >= score2)
-        p3 = np.mean(bs_replicates3 >= score3)
-        p4 = np.mean(bs_replicates4 >= score4)
+    p1 = np.mean(bs_replicates1 >= score1)
+    p2 = np.mean(bs_replicates2 >= score2)
+    p3 = np.mean(bs_replicates3 >= score3)
+    p4 = np.mean(bs_replicates4 >= score4)
     # Get 95% confidence interval
     
     
@@ -194,11 +190,11 @@ def calc_performance(y_test, y_pred, model_name, Y_name,X_test_new,model_type):
         performance = [r2, result_list_tmp[0], mae, rmse,result_list_tmp[1], adjusted_r2, result_list_tmp[2],corr, result_list_tmp[3]]
     elif model_type == "class":
         accuracy = accuracy_score(y_test, y_pred)
-        roc = roc_auc_score(y_test, y_pred)
+        cohen_kappa = cohen_kappa_score(y_test, y_pred)
         f1 = f1_score(y_test, y_pred, average='weighted')
         balanced_accuracy= balanced_accuracy_score(y_test, y_pred)
-        result_list_tmp = permutation_CI2(X_test_new,y_test, y_pred, accuracy,roc,balanced_accuracy,f1,accuracy_score, roc_auc_score,f1_score,"class")
-        performance = [accuracy, result_list_tmp[0] ,roc, result_list_tmp[1], balanced_accuracy, result_list_tmp[2],f1, result_list_tmp[3]]
+        result_list_tmp = permutation_CI2(X_test_new,y_test, y_pred, accuracy,cohen_kappa,balanced_accuracy,f1,accuracy_score, cohen_kappa_score,f1_score,"class")
+        performance = [accuracy, result_list_tmp[0] ,cohen_kappa_score, result_list_tmp[1], balanced_accuracy, result_list_tmp[2],f1, result_list_tmp[3]]
     # save performance
     df_perf = pd.read_csv(f"../results/performance_{model_type}_{Y_name}.csv", index_col=0)
     perf = pd.DataFrame([performance], columns=df_perf.columns.tolist(), index=[f"{model_name}_{model_type}"])

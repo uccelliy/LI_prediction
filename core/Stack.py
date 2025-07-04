@@ -30,7 +30,7 @@ def run_stack(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
                 'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
                 'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5]}
     elif (model_type == "class"):
-        scoring = 'roc_auc'
+        scoring = 'accuracy'
         grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
                 'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
                 'gamma': [i/10 for i in range(0,6)],
