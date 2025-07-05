@@ -1,12 +1,13 @@
 # Import packages
 # ! Note: not all packages used !
 import pandas as pd
+from sklearn import clone
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import GroupKFold,KFold
 import numpy as np
 from sklearn.metrics import cohen_kappa_score, mean_squared_error
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score,accuracy_score, roc_auc_score, f1_score,balanced_accuracy_score
-
+from imblearn.under_sampling import RandomUnderSampler
 # Define parameters random search + resampling
 n_iter = 100
 cv = 10
@@ -122,7 +123,7 @@ def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,mode
 
     return result_list
 
-def permutation_CI2(X_test_new,y_true, y_pred, score1,score2,score3,score4,function1, function2,function3,model_type ,n_times=10000):
+def permutation_CI2(X_test_new,y_true, y_pred, score1,score2,score3,score4,function1, function2,function3,model_type ,X_new=None,Y_train=None,model=None,n_times=10000):
     """
     computes metric on bootstrap samples, calculates 95% confidence interval
     function: e.g. mean_squared_error, roc_auc_score, r2_score, etc.
@@ -137,10 +138,11 @@ def permutation_CI2(X_test_new,y_true, y_pred, score1,score2,score3,score4,funct
     
     # Create bootstrap replicates as much as size
     for i in range(n_times):
-        idx_bs = np.random.permutation(np.arange(len(y_pred)))
-        y_true_bs = y_true.to_numpy()[idx_bs].ravel()
-        y_pred_bs = y_pred.ravel()
+        
         if model_type=="regr":
+            idx_bs = np.random.permutation(np.arange(len(y_pred)))
+            y_true_bs = y_true.to_numpy()[idx_bs].ravel()
+            y_pred_bs = y_pred.ravel()
             if function1 == mean_squared_error:
                 bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
             else:
@@ -157,6 +159,13 @@ def permutation_CI2(X_test_new,y_true, y_pred, score1,score2,score3,score4,funct
             else:
                 bs_replicates4[i] = function3(y_true_bs, y_pred_bs)[0,1]
         elif model_type == "class":
+            idx_bs = np.random.permutation(np.arange(len(y_pred)))
+            y_true_bs = y_true.to_numpy()[idx_bs].ravel()
+            y_pred_bs = y_pred.ravel()
+            # model_perm = clone(model)
+            # y_perm = np.random.permutation(Y_train)
+            # y_pred_bs = model_perm.fit(X_new, y_perm).predict(X_test_new)
+            # y_true_bs = y_true.to_numpy().ravel()
             bs_replicates1[i] = function1(y_true_bs, y_pred_bs)
             bs_replicates2[i] = function2(y_true_bs, y_pred_bs)
             bs_replicates3[i] = balanced_accuracy_score(y_true_bs, y_pred_bs)
@@ -177,7 +186,7 @@ def rmse_func(y_true, y_pred):
     return np.sqrt(mean_squared_error(y_true, y_pred))
 
 # Define function to calculate performance measures regression
-def calc_performance(y_test, y_pred, model_name, Y_name,X_test_new,model_type):
+def calc_performance(y_test, y_pred, model_name, Y_name,X_test_new,model_type,X_new=None,Y_train=None,model=None):
     if model_type not in ["regr", "class"]:
         raise ValueError("model_type must be 'regr' or 'class'")
     elif model_type == "regr":
@@ -193,8 +202,9 @@ def calc_performance(y_test, y_pred, model_name, Y_name,X_test_new,model_type):
         cohen_kappa = cohen_kappa_score(y_test, y_pred)
         f1 = f1_score(y_test, y_pred, average='weighted')
         balanced_accuracy= balanced_accuracy_score(y_test, y_pred)
-        result_list_tmp = permutation_CI2(X_test_new,y_test, y_pred, accuracy,cohen_kappa,balanced_accuracy,f1,accuracy_score, cohen_kappa_score,f1_score,"class")
-        performance = [accuracy, result_list_tmp[0] ,cohen_kappa_score, result_list_tmp[1], balanced_accuracy, result_list_tmp[2],f1, result_list_tmp[3]]
+        result_list_tmp = permutation_CI2(X_test_new,y_test, y_pred, accuracy,cohen_kappa,balanced_accuracy,
+                                          f1,accuracy_score, cohen_kappa_score,f1_score,"class",X_new=X_new,Y_train=Y_train,model=model)
+        performance = [accuracy, result_list_tmp[0] ,cohen_kappa, result_list_tmp[1], balanced_accuracy, result_list_tmp[2],f1, result_list_tmp[3]]
     # save performance
     df_perf = pd.read_csv(f"../results/performance_{model_type}_{Y_name}.csv", index_col=0)
     perf = pd.DataFrame([performance], columns=df_perf.columns.tolist(), index=[f"{model_name}_{model_type}"])
@@ -275,11 +285,22 @@ def prepare_data(data1,data2,name,model_type="regr"):
     data2_a = data2[data2['IID'].isin(common_ids)].sort_values(by='IID').reset_index(drop=True) 
     
     X_train, X_test, Y_train, Y_test = train_test_split(data1_a, data2_a, test_size=0.2, random_state=42)
-    groups = X_train['FID']
-    Y_train = Y_train.iloc[:, 2:]
-    Y_test = Y_test.iloc[:, 2:]
-    X_train = X_train.iloc[:, 2:]
-    X_test = X_test.iloc[:, 2:]
+    groups = X_train['FID'].reset_index(drop=True)
+
+    # 保留你要预测的标签列（假设行为名称为 behav_name）
+    Y_train = Y_train[[name]].reset_index(drop=True)
+    Y_test = Y_test[[name]].reset_index(drop=True)
+
+    # 去掉前两列（IID, FID），只保留特征
+    X_train = X_train.iloc[:, 2:].reset_index(drop=True)
+    X_test = X_test.iloc[:, 2:].reset_index(drop=True)
+
+    # 对分类任务进行欠采样
+    # if model_type == "class":
+    #     rus = RandomUnderSampler(random_state=42)
+    #     X_train, Y_train_resampled = rus.fit_resample(X_train, Y_train[name])  # 注意只传一列
+    #     Y_train = pd.DataFrame({name: Y_train_resampled})  # 转回DataFrame
+    #     groups = groups.loc[rus.sample_indices_].reset_index(drop=True)  # 同步更新 groups
     
     # predictions_regr.csv
     df_pred_init = pd.DataFrame(Y_test.values, index = X_test.index.tolist(), columns = ["y_test"])
@@ -307,6 +328,20 @@ def result_file_init(X_train,model_type, name):
     df_featimp_init = pd.DataFrame(columns = X_train.columns.tolist())
     print(df_featimp_init)
     df_featimp_init.to_csv(f"../results/feature_importances_{model_type}_{name}.csv")
+    
+def result_file_init_best(behav_name):
+    df_best_init = pd.DataFrame(columns = ["n_iter", "cv", "scoring", "best score", "best params"])
+    df_best_init.to_csv(f'../results/best_tuning_{behav_name}.csv')
+
+
+def result_file_init_performance(behav_name, model_type):
+    if model_type == "regr":
+        df_perf_init = pd.DataFrame(columns = ["r2", "p1", "mae", "rmse", "p2", "adj_r2", "p3","r", "p4"])
+        df_perf_init.to_csv(f'../results/performance_regr_{behav_name}.csv')
+    elif model_type == "class":
+        df_perf_init = pd.DataFrame(columns = ["accuracy", "p1", "cohen_kappa","p2","balance_acc","p3","f1","p4"])
+        df_perf_init.to_csv(f'../results/performance_class_{behav_name}.csv')
+
     
 
 #不能在这里分训练集和测试集，应该是分好，传入模型,传入的Y也是一个矩阵，我们要对每一列分别处理，并且把每一列的结果分别保存下来

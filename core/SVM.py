@@ -36,7 +36,7 @@ def run_svm( X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 #                'gamma': ['scale', 'auto', 0.01, 0.1, 1],  # RBF/poly/sigmoid用
 #                'degree': [2, 3, 4],  # 仅对 kernel='poly' 有效
 #                 'class_weight': [None, 'balanced']}
-        model = svm.SVC(probability=True)
+        model = svm.SVC(probability=True,class_weight='balanced')
         scoring = 'accuracy'  # Default scoring for classification
     else:
         raise ValueError("model_type must be 'regr' or 'class'")
@@ -70,7 +70,10 @@ def run_svm( X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 
     ### Run model on test set
     y_pred_test = svr.predict(X_test_new)
-    performance = util.calc_performance(Y_test, y_pred_test, model_name, Y_name,X_test_new,model_type)
+    if model_type == "class":
+        performance = util.calc_performance(Y_test, y_pred_test, model_name, Y_name,X_test_new,model_type,X_new=X_new,Y_train=Y_train.values.ravel(),model=svr)
+    else:
+        performance = util.calc_performance(Y_test, y_pred_test, model_name, Y_name,X_test_new,model_type)
     print(performance)
 
 #     ### Calculate feature_importances

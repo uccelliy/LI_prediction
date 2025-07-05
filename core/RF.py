@@ -28,7 +28,7 @@ def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 #               'min_samples_leaf': list(range(1 ,11))} # Minimum number of samples required at each leaf node
         scoring = 'neg_mean_squared_error'  # Default scoring for regression
     elif(model_type == "class"):
-        model = RandomForestClassifier(random_state = random_state)
+        model = RandomForestClassifier(random_state = random_state,class_weight='balanced')
 #        grid_rf = {'n_estimators': list(range(100, 1100, 100)), # Nr of trees
 #               'max_features': list(range(4, 32)), # Number of features to consider at every split
 #               'max_depth': list(range(2, 15)), # Max depth of tree
@@ -69,7 +69,10 @@ def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 
     ### Run model on test set
     y_pred_test = rf.predict(X_test_new)
-    performance = util.calc_performance(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type)
+    if model_type == "class":
+        performance = util.calc_performance(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type,X_new=X_new,Y_train=Y_train.values.ravel(),model=rf)
+    else:
+        performance = util.calc_performance(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type)
     print(performance)
 
     # ### Calculate feature_importances

@@ -6,6 +6,7 @@ import shap
 from datetime import timedelta
 from sklearn.model_selection import RandomizedSearchCV
 import xgboost as xgb
+from sklearn.utils.class_weight import compute_sample_weight
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -13,7 +14,7 @@ import matplotlib.pyplot as plt
 import joblib
 from sklearn.preprocessing import LabelEncoder as LE
 def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
-   
+    sample_weight = compute_sample_weight(class_weight='balanced', y=Y_train)
     print("Running XGBoost regression")
 # Set up model
     model_name = "XGB"
@@ -72,11 +73,17 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     xgb_mod = xgb_regr.best_estimator_
 
     # Fits the model on the data
-    xgb_mod.fit(X_new, Y_train.values.ravel())
+    if model_type == "class":
+        xgb_mod.fit(X_new, Y_train.values.ravel(), sample_weight=sample_weight)
+    else:
+        xgb_mod.fit(X_new, Y_train.values.ravel())
     joblib.dump(xgb_mod, f'xgb_{Y_name}.pkl')
     ### Run model on test set
     y_pred_test = xgb_mod.predict(X_test_new)
-    performance = util.calc_performance(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type)
+    if model_type == "class":
+        performance = util.calc_performance(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type,X_new=X_new,Y_train=Y_train.values.ravel(),model=xgb_mod)
+    else:
+        performance = util.calc_performance(Y_test, y_pred_test, model_name,Y_name,X_test_new,model_type)
     print(performance)
 
     # ### Calculate feature_importances
