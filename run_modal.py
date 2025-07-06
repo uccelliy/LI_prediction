@@ -12,12 +12,12 @@ import core.FeatureSelection as FS
 
 
 # Read in the data
-model_type = "regr" #选择模型类型 class/regr 唯一需要修改的地方
+model_type = "class" #选择模型类型 class/regr 唯一需要修改的地方
 os.chdir(os.path.dirname(__file__))  
 input_file = 'C:/Users/77260/Desktop/111/dti_5e6.txt'
 X = pd.read_csv(input_file, sep="\t", decimal='.', encoding='cp1252')
 print(X.shape)
-input_file4 = 'C:/Users/77260/Desktop/111/regr_test.txt'
+input_file4 = 'C:/Users/77260/Desktop/111/class_test.txt'
 Y_all = pd.read_csv(input_file4, sep="\t", decimal='.', encoding='cp1252')
 print(Y_all.shape)
 behaviors = Y_all.columns[2:]  # 跳过前两列（假设前两列非目标变量）
@@ -67,7 +67,7 @@ for behav_name in behaviors:
     util.result_file_init_performance(behav_name, model_type)
 
 
-    RF.run_rf(X_train_new, X_test_new, Y_train, Y_test, behav_name, groups,model_type)
+    # RF.run_rf(X_train_new, X_test_new, Y_train, Y_test, behav_name, groups,model_type)
     # SVM.run_svm(X_train_new, X_test_new, Y_train, Y_test, behav_name, groups,model_type)
     # XGB.run_xgb(X_train_new, X_test_new, Y_train, Y_test, behav_name, groups,model_type)
  
@@ -76,7 +76,7 @@ for behav_name in behaviors:
     #     for model_func in [RF.run_rf, SVM.run_svm, XGB.run_xgb]
     #     )
     
-    #Stack.run_stack(X_train_new, X_test_new, Y_train, Y_test, behav_name, groups,model_type)
+    Stack.run_stack(X_train_new, X_test_new, Y_train, Y_test, behav_name, groups,model_type)
     
    
 

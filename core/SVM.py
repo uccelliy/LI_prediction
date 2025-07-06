@@ -22,16 +22,16 @@ def run_svm( X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     if(model_type == "regr"):
         model = SVR()
         # Define parameter grid
-#        grid_pipe_svm = {'C': [0.01, 0.1, 1, 10],
-#                'kernel': ["linear", "poly", "rbf", "sigmoid"],
-#               'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10, "scale", "auto"]}
+        grid_pipe_svm = {'C': [0.01, 0.1, 1, 10],
+               'kernel': ["linear", "poly", "rbf", "sigmoid"],
+              'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10, "scale", "auto"]}
         scoring = 'neg_mean_squared_error'  # Default scoring for regression
     elif(model_type == "class"):
-#        grid_pipe_svm = {'C': [0.1, 1, 10, 100],
-#                'kernel': ['linear', 'rbf', 'poly', 'sigmoid'],
-#                'gamma': ['scale', 'auto', 0.01, 0.1, 1],  # RBF/poly/sigmoid用
-#                'degree': [2, 3, 4],  # 仅对 kernel='poly' 有效
-#                 'class_weight': [None, 'balanced']}
+        grid_pipe_svm = {'C': [0.1, 1, 10, 100],
+               'kernel': ['linear', 'rbf', 'poly', 'sigmoid'],
+               'gamma': ['scale', 'auto', 0.01, 0.1, 1],  # RBF/poly/sigmoid用
+               'degree': [2, 3, 4],  # 仅对 kernel='poly' 有效
+                'class_weight': [None, 'balanced']}
         model = SVC(probability=True,class_weight='balanced')
         scoring = 'balanced_accuracy'  # Default scoring for classification
     else:

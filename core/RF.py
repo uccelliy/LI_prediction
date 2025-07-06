@@ -18,20 +18,20 @@ def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     model_name = "RF"
     if(model_type == "regr"):
         model = RandomForestRegressor(random_state = random_state)
-#        grid_rf = {'n_estimators': list(range(100, 1100, 100)), # Nr of trees
-#               'max_features': list(range(4, 32)), # Number of features to consider at every split
-#               'max_depth': list(range(2, 15)), # Max depth of tree
-#               'min_samples_split': list(range(2 ,11)), # Minimum number of samples required to split a node
-#               'min_samples_leaf': list(range(1 ,11))} # Minimum number of samples required at each leaf node
+        grid_rf = {'n_estimators': list(range(100, 1100, 100)), # Nr of trees
+              'max_features': list(range(4, 32)), # Number of features to consider at every split
+              'max_depth': list(range(2, 15)), # Max depth of tree
+              'min_samples_split': list(range(2 ,11)), # Minimum number of samples required to split a node
+              'min_samples_leaf': list(range(1 ,11))} # Minimum number of samples required at each leaf node
         scoring = 'neg_mean_squared_error'  # Default scoring for regression
     elif(model_type == "class"):
         model = RandomForestClassifier(random_state = random_state,class_weight='balanced')
-#        grid_rf = {'n_estimators': list(range(100, 1100, 100)), # Nr of trees
-#               'max_features': list(range(4, 32)), # Number of features to consider at every split
-#               'max_depth': list(range(2, 15)), # Max depth of tree
-#               'min_samples_split': list(range(2 ,11)), # Minimum number of samples required to split a node
-#               'min_samples_leaf': list(range(1 ,11)),
-#               'class_weight': [None, 'balanced']} 
+        grid_rf = {'n_estimators': list(range(100, 1100, 100)), # Nr of trees
+              'max_features': list(range(4, 32)), # Number of features to consider at every split
+              'max_depth': list(range(2, 15)), # Max depth of tree
+              'min_samples_split': list(range(2 ,11)), # Minimum number of samples required to split a node
+              'min_samples_leaf': list(range(1 ,11)),
+              'class_weight': [None, 'balanced']} 
         scoring = 'balanced_accuracy'  # Default scoring for classification  试了三种accuracy f1 balanced_accuracy最好的时balanced_accuracy
     else:
         raise ValueError("model_type must be 'regr' or 'class'")

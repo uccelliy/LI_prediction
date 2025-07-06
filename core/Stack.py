@@ -49,10 +49,12 @@ def run_stack(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
         le = LE()
         Y_train = pd.Series(le.fit_transform(Y_train), index=Y_train.index, name="target")
         Y_test = pd.Series(le.transform(Y_test), index=Y_test.index, name="target")
+        
+    grid_pipe_debug={'learning_rate': [ 0.05, 0.075, 0.1], 'max_depth': list(range(2, 16))}
 
 # Randomized search:
     grid_search_meta = RandomizedSearchCV(estimator = f_clf,
-                                param_distributions  = grid_pipe_xgb,
+                                param_distributions  = grid_pipe_debug,
                                 scoring = scoring,
                                 cv = util.PseudoGroupCV(kfold,groups),
                                 verbose = 2, random_state = random_state,
@@ -73,7 +75,7 @@ def run_stack(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 
     start = perf_counter()
     print("Fitting Stacked model")
-    stack_pipeline.fit(X_new, Y_train.values.ravel(),sample_weight=sample_weight)
+    stack_pipeline.fit(X_new, Y_train.values.ravel())
     stop = perf_counter()
     print("Time: ", timedelta(seconds = stop -start))
    

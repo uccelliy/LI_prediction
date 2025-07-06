@@ -20,28 +20,28 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     model_name = "XGB"
     if(model_type == "regr"):
         model = xgb.XGBRegressor(random_state=random_state)
-#        grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
-#                'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
-#                'gamma': [i/10 for i in range(0,6)],
-#                'max_depth': list(range(2, 16)),
-#                'min_child_weight': list(range(1,11)),
-#                'subsample': [x/10 for x in range(2, 11)],
-#                'colsample_bytree': [x/10 for x in range(2, 11)],
-#                'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
-#                'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5]}
+        grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
+               'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
+               'gamma': [i/10 for i in range(0,6)],
+               'max_depth': list(range(2, 16)),
+               'min_child_weight': list(range(1,11)),
+               'subsample': [x/10 for x in range(2, 11)],
+               'colsample_bytree': [x/10 for x in range(2, 11)],
+               'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+               'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5]}
         scoring='neg_mean_squared_error'  # Default scoring for regression
     elif(model_type == "class"):
         model = xgb.XGBClassifier(random_state=random_state)
-#        grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
-#            'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
-#            'gamma': [i/10 for i in range(0,6)],
-#            'max_depth': list(range(2, 16)),
-#            'min_child_weight': list(range(1,11)),
-#            'subsample': [x/10 for x in range(2, 11)],
-#            'colsample_bytree': [x/10 for x in range(2, 11)],
-#            'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
-#            'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
-#            'scale_pos_weight': [1, 2, 5]}
+        grid_pipe_xgb = {'n_estimators': list(range(100, 1100, 100)),
+           'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3],
+           'gamma': [i/10 for i in range(0,6)],
+           'max_depth': list(range(2, 16)),
+           'min_child_weight': list(range(1,11)),
+           'subsample': [x/10 for x in range(2, 11)],
+           'colsample_bytree': [x/10 for x in range(2, 11)],
+           'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+           'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+           'scale_pos_weight': [1, 2, 5]}
         scoring = 'balanced_accuracy'  # Default scoring for classification
         le = LE()
         Y_train = pd.Series(le.fit_transform(Y_train), index=Y_train.index, name="target")
