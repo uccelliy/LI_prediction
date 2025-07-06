@@ -42,9 +42,11 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 #            'reg_lambda': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
 #            'reg_alpha': [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
 #            'scale_pos_weight': [1, 2, 5]}
-        scoring = 'accuracy'  # Default scoring for classification
-        Y_train = LE().fit_transform(Y_train)  # Encode labels for classification
-        Y_test = LE().fit_transform(Y_test)  # Encode labels for classification
+        scoring = 'balanced_accuracy'  # Default scoring for classification
+        le = LE()
+        Y_train = pd.Series(le.fit_transform(Y_train), index=Y_train.index, name="target")
+        Y_test = pd.Series(le.transform(Y_test), index=Y_test.index, name="target")
+        
     else:
         raise ValueError("model_type must be 'regr' or 'class'")
 
@@ -59,7 +61,7 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     # Randomized search:
     start = perf_counter()
     print("Fitting XGBoost model")
-    xgb_regr.fit(X_new, Y_train.values.ravel())
+    xgb_regr.fit(X_new, Y_train.values.ravel(),sample_weight=sample_weight)
     print("Best params: ", xgb_regr.best_params_)
     stop = perf_counter()
     print("Time: ", timedelta(seconds = stop-start))
@@ -100,13 +102,13 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     # shap_values = explainer(X_test_new)
 
     # # Save SHAP values per person
-    # shap_pp_df_xgb = pd.DataFrame(shap_values.values, columns = X_test_new.columns)
+    # shap_pp_df_xgb = pd.DataFrame(shap_values, columns = X_test_new.columns)
     # shap_pp_df_xgb.to_csv(f"../results/shap_xgb_pp_{Y_name}.csv")
 
     # # Average over all participants
     # importances = []
-    # for i in range(shap_values.values.shape[1]):
-    #     importances.append(np.mean(np.abs(shap_values.values[:, i])))
+    # for i in range(shap_values.shape[1]):
+    #     importances.append(np.mean(np.abs(shap_values[:, i])))
 
     # feature_importances = {fea: imp for imp, fea in zip(importances, X_new.columns.to_list())}
 
@@ -115,7 +117,7 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     # df_shap.to_csv(f"../results/shap_xgb_{Y_name}.csv")
 
     # feature_names = [
-    #     a + ": " + str(b) for a,b in zip(X_test_new.columns, np.abs(shap_values.values).mean(0).round(3))
+    #     a + ": " + str(b) for a,b in zip(X_test_new.columns, np.abs(shap_values).mean(0).round(3))
     # ]
 
     # # Plot top 15 features

@@ -15,9 +15,6 @@ import joblib
 ### Random forest regression
 def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     print("Running RF regression")
-  
-
-
     model_name = "RF"
     if(model_type == "regr"):
         model = RandomForestRegressor(random_state = random_state)
@@ -35,7 +32,7 @@ def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 #               'min_samples_split': list(range(2 ,11)), # Minimum number of samples required to split a node
 #               'min_samples_leaf': list(range(1 ,11)),
 #               'class_weight': [None, 'balanced']} 
-        scoring = 'accuracy'  # Default scoring for classification
+        scoring = 'balanced_accuracy'  # Default scoring for classification  试了三种accuracy f1 balanced_accuracy最好的时balanced_accuracy
     else:
         raise ValueError("model_type must be 'regr' or 'class'")
     
@@ -50,7 +47,6 @@ def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     start = perf_counter()
     print("Fitting RF model")
     rf_regr_pipe_test.fit(X_new, Y_train.values.ravel())
-    print("Best params: ", rf_regr_pipe_test.best_params_)
     stop = perf_counter()
     print("Time: ", timedelta(seconds = stop -start))
 

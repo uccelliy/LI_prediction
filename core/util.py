@@ -18,15 +18,6 @@ kfold = GroupKFold(n_splits=cv)
 
 # Save results from randomized search
 def save_results_cv_pipe(model_random, model_name, model_type, scoring,Y_name,X_new):
-    """
-    model_random: fitted randomized search model
-    model_name: "RF", "XGB" or "SVM"
-    model_type: "class" or "regr"
-    scoring: scoring_class / scoring_regr
-
-    returns dataframe row with best results
-    """
-
     # Save all results
     cv_results = pd.DataFrame(model_random.cv_results_)
     file = f"../results/cv_results_{model_name}_{model_type}_{Y_name}.csv"
@@ -60,18 +51,11 @@ def save_results_cv_pipe(model_random, model_name, model_type, scoring,Y_name,X_
                                                   f"{model_name}_{model_type}_gini_scaled"])
         df_featimp = pd.concat([df_featimp, feature_importances])
         df_featimp.to_csv(f"../results/feature_importances_{model_type}{file_extension}_{Y_name}.csv")
-
+        
     return best
 
 # Function to calculate 95% bootstrap interval
 def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,model_type ,n_times=10000,threshold=5):
-    """
-    computes metric on bootstrap samples, calculates 95% confidence interval
-    function: e.g. mean_squared_error, roc_auc_score, r2_score, etc.
-
-    returns: lower boundary, upper boundary, bootstrap replicates
-    """
-
     bs_replicates1 = np.empty(n_times)
     bs_replicates2 = np.empty(n_times)
     bs_replicates3 = np.empty(n_times)
@@ -105,7 +89,6 @@ def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,mode
             bs_replicates3[i] = balanced_accuracy_score(y_true_bs, y_pred_bs)
             bs_replicates4[i] = function3(y_true_bs, y_pred_bs)
 
-
     # Get 95% confidence interval
     ci_lower1 = np.percentile(bs_replicates1, threshold)
     ci_upper1 = np.percentile(bs_replicates1, (100 - threshold))
@@ -123,14 +106,7 @@ def bootstrap_CI2(X_test_new,y_true, y_pred, function1, function2,function3,mode
 
     return result_list
 
-def permutation_CI2(X_test_new,y_true, y_pred, score1,score2,score3,score4,function1, function2,function3,model_type ,X_new=None,Y_train=None,model=None,n_times=10000):
-    """
-    computes metric on bootstrap samples, calculates 95% confidence interval
-    function: e.g. mean_squared_error, roc_auc_score, r2_score, etc.
-
-    returns: lower boundary, upper boundary, bootstrap replicates
-    """
-
+def permutation_Pvalue(X_test_new,y_true, y_pred, score1,score2,score3,score4,function1, function2,function3,model_type ,X_new=None,Y_train=None,model=None,n_times=10000):
     bs_replicates1 = np.empty(n_times)
     bs_replicates2 = np.empty(n_times)
     bs_replicates3 = np.empty(n_times)
@@ -195,14 +171,14 @@ def calc_performance(y_test, y_pred, model_name, Y_name,X_test_new,model_type,X_
         mae = mean_absolute_error(y_test, y_pred)
         rmse = rmse_func(y_test, y_pred)
         corr =  np.corrcoef(np.ravel(y_test), np.ravel(y_pred))[0, 1]
-        result_list_tmp = permutation_CI2(X_test_new,y_test, y_pred, r2,rmse,adjusted_r2,corr,r2_score, rmse_func,np.corrcoef,"regr")
+        result_list_tmp = permutation_Pvalue(X_test_new,y_test, y_pred, r2,rmse,adjusted_r2,corr,r2_score, rmse_func,np.corrcoef,"regr")
         performance = [r2, result_list_tmp[0], mae, rmse,result_list_tmp[1], adjusted_r2, result_list_tmp[2],corr, result_list_tmp[3]]
     elif model_type == "class":
         accuracy = accuracy_score(y_test, y_pred)
         cohen_kappa = cohen_kappa_score(y_test, y_pred)
         f1 = f1_score(y_test, y_pred, average='weighted')
         balanced_accuracy= balanced_accuracy_score(y_test, y_pred)
-        result_list_tmp = permutation_CI2(X_test_new,y_test, y_pred, accuracy,cohen_kappa,balanced_accuracy,
+        result_list_tmp = permutation_Pvalue(X_test_new,y_test, y_pred, accuracy,cohen_kappa,balanced_accuracy,
                                           f1,accuracy_score, cohen_kappa_score,f1_score,"class",X_new=X_new,Y_train=Y_train,model=model)
         performance = [accuracy, result_list_tmp[0] ,cohen_kappa, result_list_tmp[1], balanced_accuracy, result_list_tmp[2],f1, result_list_tmp[3]]
     # save performance
@@ -226,10 +202,6 @@ def calc_performance(y_test, y_pred, model_name, Y_name,X_test_new,model_type,X_
 
 # function that calculates permutation importances
 def calc_feature_importance(estimator, X, y, model_name, model_type,Y_name):
-    """
-    estimator: best model from randomized search
-    model_type: "class" or "regr"
-    """
     if model_type == "class":
         scoring = "roc_auc"
     elif model_type == "regr":
@@ -304,13 +276,11 @@ def prepare_data(data1,data2,name,model_type="regr"):
     
     # predictions_regr.csv
     df_pred_init = pd.DataFrame(Y_test.values, index = X_test.index.tolist(), columns = ["y_test"])
-    print(df_pred_init)
     df_pred_init.to_csv(f"../results/predictions_{model_type}_{name}.csv")
     
     ## ### Initialize dataframes
     ##  support_regr.csv
     df_support_init = pd.DataFrame(columns = X_train.columns.tolist())
-    print(df_support_init)
     df_support_init.to_csv(f"../results/support_{model_type}_{name}.csv")
     
     # initialize permutation feature importances with selected features
@@ -320,13 +290,11 @@ def prepare_data(data1,data2,name,model_type="regr"):
 
 def result_file_init(X_train,model_type, name):
     df_perm_featimp_init = pd.DataFrame(columns = X_train.columns.tolist())
-    print(df_perm_featimp_init)
     df_perm_featimp_init.to_csv(f"../results/perm_feature_importances_{model_type}_{name}.csv")
 
     # # initialize feature_importances_regr.csv
     # these are based on training set (within model)
     df_featimp_init = pd.DataFrame(columns = X_train.columns.tolist())
-    print(df_featimp_init)
     df_featimp_init.to_csv(f"../results/feature_importances_{model_type}_{name}.csv")
     
 def result_file_init_best(behav_name):
