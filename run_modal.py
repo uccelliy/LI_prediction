@@ -67,7 +67,7 @@ for behav_name in behaviors:
     util.result_file_init_performance(behav_name, model_type)
 
 
-    # RF.run_rf(X_train_new, X_test_new, Y_train, Y_test, behav_name, groups,model_type)
+    RF.run_rf(X_train_new, X_test_new, Y_train, Y_test, behav_name, groups,model_type)
     # SVM.run_svm(X_train_new, X_test_new, Y_train, Y_test, behav_name, groups,model_type)
     # XGB.run_xgb(X_train_new, X_test_new, Y_train, Y_test, behav_name, groups,model_type)
  
@@ -76,7 +76,7 @@ for behav_name in behaviors:
     #     for model_func in [RF.run_rf, SVM.run_svm, XGB.run_xgb]
     #     )
     
-    Stack.run_stack(X_train_new, X_test_new, Y_train, Y_test, behav_name, groups,model_type)
+    # Stack.run_stack(X_train_new, X_test_new, Y_train, Y_test, behav_name, groups,model_type)
     
    
 

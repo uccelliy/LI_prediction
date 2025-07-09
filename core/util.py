@@ -203,7 +203,7 @@ def calc_performance(y_test, y_pred, model_name, Y_name,X_test_new,model_type,X_
 # function that calculates permutation importances
 def calc_feature_importance(estimator, X, y, model_name, model_type,Y_name):
     if model_type == "class":
-        scoring = "roc_auc"
+        scoring = 'balanced_accuracy'
     elif model_type == "regr":
         scoring = "neg_root_mean_squared_error"
     else:
