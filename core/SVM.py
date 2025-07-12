@@ -39,7 +39,7 @@ def run_svm( X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     
 
     # Randomized search:
-    svm_regr = RandomizedSearchCV(estimator = model, param_distributions = grid_svm_debug, scoring = scoring, 
+    svm_regr = RandomizedSearchCV(estimator = model, param_distributions = grid_pipe_svm, scoring = scoring, 
                                   n_iter = n_iter, cv = util.PseudoGroupCV(kfold,groups), verbose = 2, 
                                   random_state = random_state, n_jobs = -1)
     start = perf_counter()

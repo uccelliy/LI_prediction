@@ -32,7 +32,7 @@ def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
               'min_samples_split': list(range(2 ,11)), # Minimum number of samples required to split a node
               'min_samples_leaf': list(range(1 ,11)),
               'class_weight': [None, 'balanced']} 
-        scoring = 'balanced_accuracy'  # Default scoring for classification  试了三种accuracy f1 balanced_accuracy最好的时balanced_accuracy
+        scoring = 'balanced_accuracy'  # Default scoring for classification  试了三种accuracy f1 balanced_accuracy最好的时balanced_accuracy 这里都可以写什么问一下chat
     else:
         raise ValueError("model_type must be 'regr' or 'class'")
     
@@ -41,7 +41,7 @@ def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 
     grid_rf_debug={'n_estimators': list(range(100, 1100, 100)),'max_depth': list(range(2, 15))}
     # Randomized search:
-    rf_regr_pipe_test = RandomizedSearchCV(estimator = model, param_distributions = grid_rf_debug, scoring = scoring, 
+    rf_regr_pipe_test = RandomizedSearchCV(estimator = model, param_distributions = grid_rf, scoring = scoring, 
                                            n_iter = n_iter, cv = util.PseudoGroupCV(kfold,groups), verbose = 0, 
                                            random_state = random_state, n_jobs = -1)
     start = perf_counter()

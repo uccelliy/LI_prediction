@@ -54,7 +54,7 @@ def run_stack(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
 
 # Randomized search:
     grid_search_meta = RandomizedSearchCV(estimator = f_clf,
-                                param_distributions  = grid_pipe_debug,
+                                param_distributions  = grid_pipe_xgb,
                                 scoring = scoring,
                                 cv = util.PseudoGroupCV(kfold,groups),
                                 verbose = 2, random_state = random_state,

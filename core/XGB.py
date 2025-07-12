@@ -54,7 +54,7 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
    
 
     grid_xgb_debug={'n_estimators': list(range(100, 1100, 100)),'max_depth': list(range(2, 15))}
-    xgb_regr = RandomizedSearchCV(estimator = model, param_distributions = grid_xgb_debug, 
+    xgb_regr = RandomizedSearchCV(estimator = model, param_distributions = grid_pipe_xgb, 
                                   scoring = scoring, n_iter = n_iter, 
                                   cv = util.PseudoGroupCV(kfold,groups), 
                                   verbose = 0, random_state = random_state, n_jobs = -1)
