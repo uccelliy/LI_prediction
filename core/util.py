@@ -2,7 +2,7 @@
 # ! Note: not all packages used !
 import pandas as pd
 from sklearn import clone
-from sklearn.inspection import permutation_importance
+
 from sklearn.model_selection import GroupKFold,KFold
 import numpy as np
 from sklearn.metrics import cohen_kappa_score, mean_squared_error
@@ -31,27 +31,7 @@ def save_results_cv_pipe(model_random, model_name, model_type, scoring,Y_name,X_
     df_best = pd.read_csv(f"../results/best_tuning_{Y_name}.csv", index_col=0)
     df_best = pd.concat([df_best, best])
     df_best.to_csv(f"../results/best_tuning_{Y_name}.csv")
-
-    # Save gini feature importances for the tree based models
-    if model_name.startswith("RF") or model_name.startswith("XGB"):
-        if model_name.endswith("_noprs"):
-            if model_name.endswith("_child_noprs"):
-                file_extension = "_child_noprs"
-            else:
-                file_extension = "_noprs"
-        elif model_name.endswith("_child"):
-            file_extension = "_child"
-        else:
-            file_extension = ""
-        gini_imp = model_random.best_estimator_.feature_importances_
-        gini_imp_scaled = (gini_imp - np.min(gini_imp)) / (np.max(gini_imp) - np.min(gini_imp))
-        df_featimp = pd.read_csv(f"../results/feature_importances_{model_type}{file_extension}_{Y_name}.csv", index_col=0)
-        feature_importances = pd.DataFrame([gini_imp, gini_imp_scaled], columns=X_new.columns.to_list(),
-                                           index=[f"{model_name}_{model_type}_gini",
-                                                  f"{model_name}_{model_type}_gini_scaled"])
-        df_featimp = pd.concat([df_featimp, feature_importances])
-        df_featimp.to_csv(f"../results/feature_importances_{model_type}{file_extension}_{Y_name}.csv")
-        
+  
     return best
 
 # Function to calculate 95% bootstrap interval
@@ -200,36 +180,7 @@ def calc_performance(y_test, y_pred, model_name, Y_name,X_test_new,model_type,X_
 
     return perf
 
-# function that calculates permutation importances
-def calc_feature_importance(estimator, X, y, model_name, model_type,Y_name):
-    if model_type == "class":
-        scoring = 'balanced_accuracy'
-    elif model_type == "regr":
-        scoring = "neg_root_mean_squared_error"
-    else:
-        scoring = None
 
-    feature_imp = permutation_importance(estimator, X, y, scoring=scoring, n_jobs = -1, random_state=42).importances_mean
-    feature_imp_scaled = (feature_imp - np.min(feature_imp)) / (np.max(feature_imp) - np.min(feature_imp))
-
-    # Save feature importances
-    if model_name.endswith("_noprs"):
-        if model_name.endswith("_child_noprs"):
-            file_extension = "_child_noprs"
-        else:
-            file_extension = "_noprs"
-    elif model_name.endswith("_child"):
-        file_extension = "_child"
-    else:
-        file_extension = ""
-
-    df_perm_featimp = pd.read_csv(f"../results/perm_feature_importances_{model_type}{file_extension}_{Y_name}.csv", index_col=0)
-    feature_importances = pd.DataFrame([feature_imp, feature_imp_scaled], columns=df_perm_featimp.columns.tolist(),
-                                       index=[f"{model_name}_{model_type}", f"{model_name}_{model_type}_scaled"])
-    df_perm_featimp = pd.concat([df_perm_featimp, feature_importances])
-    df_perm_featimp.to_csv(f"../results/perm_feature_importances_{model_type}{file_extension}_{Y_name}.csv")
-
-    return feature_importances
 
 # setting up the group split
 from sklearn.model_selection import  train_test_split
@@ -288,14 +239,17 @@ def prepare_data(data1,data2,name,model_type="regr"):
     
     return X_train, X_test, Y_train, Y_test,groups
 
-def result_file_init(X_train,model_type, name):
+def featimp_file_init(X_train,model_type, name):
     df_perm_featimp_init = pd.DataFrame(columns = X_train.columns.tolist())
     df_perm_featimp_init.to_csv(f"../results/perm_feature_importances_{model_type}_{name}.csv")
 
-    # # initialize feature_importances_regr.csv
-    # these are based on training set (within model)
-    df_featimp_init = pd.DataFrame(columns = X_train.columns.tolist())
-    df_featimp_init.to_csv(f"../results/feature_importances_{model_type}_{name}.csv")
+    df_tree_featimp_init = pd.DataFrame(columns = X_train.columns.tolist())
+    df_tree_featimp_init.to_csv(f"../results/tree_feature_importances_{model_type}_{name}.csv")
+    
+    df_shap_featimp_init = pd.DataFrame(columns = X_train.columns.tolist())
+    df_shap_featimp_init.to_csv(f"../results/shap_feature_importances_{model_type}_{name}.csv")
+    
+    
     
 def result_file_init_best(behav_name):
     df_best_init = pd.DataFrame(columns = ["n_iter", "cv", "scoring", "best score", "best params"])

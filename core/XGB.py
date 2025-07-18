@@ -94,9 +94,7 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     stop = perf_counter()
     print("Time: ", timedelta(seconds = stop-start))
 
-    #num_features = X_new.shape[1]
-    #max_evals = max(2 * num_features + 1, 1500)  # 或你想设的上限
-
+   
     # Calculate SHAP values xgb
     explainer = shap.Explainer(xgb_mod, X_test_new)
     shap_values = explainer(X_test_new)

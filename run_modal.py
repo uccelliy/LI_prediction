@@ -57,7 +57,7 @@ for behav_name in behaviors:
     
     #进行特征筛选
     X_train_new, transform = FS.feature_selection(X_train, Y_train, groups, model_type=model_type,method="None")
-    util.result_file_init(X_train_new,model_type,behav_name)
+    util.featimp_file_init(X_train_new,model_type,behav_name)
     if transform is None:
         print(f"No features selected for {behav_name}. Skipping...")
         X_test_new = X_test 
