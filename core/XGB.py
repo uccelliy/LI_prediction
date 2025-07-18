@@ -13,6 +13,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import joblib
 from sklearn.preprocessing import LabelEncoder as LE
+import core.FeatureImportance as FI
+import core.DrawPic as DrawPic
 def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     sample_weight = compute_sample_weight(class_weight='balanced', y=Y_train)
     print("Running XGBoost regression")
@@ -54,25 +56,25 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
    
 
     grid_xgb_debug={'n_estimators': list(range(100, 1100, 100)),'max_depth': list(range(2, 15))}
-    xgb_regr = RandomizedSearchCV(estimator = model, param_distributions = grid_pipe_xgb, 
+    xgb = RandomizedSearchCV(estimator = model, param_distributions = grid_pipe_xgb, 
                                   scoring = scoring, n_iter = n_iter, 
                                   cv = util.PseudoGroupCV(kfold,groups), 
                                   verbose = 0, random_state = random_state, n_jobs = -1)
     # Randomized search:
     start = perf_counter()
     print("Fitting XGBoost model")
-    xgb_regr.fit(X_new, Y_train.values.ravel(),sample_weight=sample_weight)
-    print("Best params: ", xgb_regr.best_params_)
+    xgb.fit(X_new, Y_train.values.ravel(),sample_weight=sample_weight)
+    print("Best params: ", xgb.best_params_)
     stop = perf_counter()
     print("Time: ", timedelta(seconds = stop-start))
 
     # Save results
-    best_results = util.save_results_cv_pipe(xgb_regr, model_name, model_type, scoring,Y_name,X_new)
+    best_results = util.save_results_cv_pipe(xgb, model_name, model_type, scoring,Y_name,X_new)
     print("Best results:")
     print(best_results)
 
     # Initialize model
-    xgb_mod = xgb_regr.best_estimator_
+    xgb_mod = xgb.best_estimator_
 
     # Fits the model on the data
     if model_type == "class":
@@ -89,45 +91,8 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     print(performance)
 
     ### Calculate feature_importances
-    start = perf_counter()
-    util.calc_feature_importance(xgb_mod, X_test_new, Y_test, model_name, model_type,Y_name)
-    stop = perf_counter()
-    print("Time: ", timedelta(seconds = stop-start))
 
-   
-    # Calculate SHAP values xgb
-    explainer = shap.Explainer(xgb_mod, X_test_new)
-    shap_values = explainer(X_test_new)
-
-    # Save SHAP values per person
-    shap_pp_df_xgb = pd.DataFrame(shap_values, columns = X_test_new.columns)
-    shap_pp_df_xgb.to_csv(f"../results/shap_xgb_pp_{Y_name}.csv")
-
-    # Average over all participants
-    importances = []
-    for i in range(shap_values.shape[1]):
-        importances.append(np.mean(np.abs(shap_values[:, i])))
-
-    feature_importances = {fea: imp for imp, fea in zip(importances, X_new.columns.to_list())}
-
-    # Save averages
-    df_shap = pd.DataFrame.from_dict(feature_importances, orient = 'index')
-    df_shap.to_csv(f"../results/shap_xgb_{Y_name}.csv")
-
-    feature_names = [
-        a + ": " + str(b) for a,b in zip(X_test_new.columns, np.abs(shap_values).mean(0).round(3))
-    ]
-
-    # Plot top 15 features
-    plt.clf()
-    shap.summary_plot(shap_values, max_display=15,feature_names=feature_names)
-    plt.gcf().set_size_inches(15, 10)
-    plt.savefig(f'../results/SHAP_xgb_top15_ntr_{Y_name}.png', bbox_inches="tight", dpi=300)
-    plt.close()
-    # Plot top 15 features (bargraph)
-    plt.clf()
-    shap.summary_plot(shap_values, plot_type="bar", max_display=15,
-                      feature_names=feature_names)
-    plt.gcf().set_size_inches(18, 10)
-    plt.savefig(f'../results/SHAP_xgb_top15_bar_ntr_{Y_name}.png', bbox_inches="tight", dpi=500)
-    plt.close()
+    FI.calc_permutation_feature_importance(xgb_mod,X_test_new,Y_test,model_name,model_type,Y_name)
+    FI.calc_tree_gini_feature_importance(xgb_mod,model_name,model_type,Y_name)
+    shap_value=FI.calc_shap_feature_importances(xgb_mod,X_test_new,X_new,Y_name,model_type,model_name)
+    DrawPic(shap_value,X_test_new,Y_name)

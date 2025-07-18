@@ -11,6 +11,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import joblib
+import core.FeatureImportance as FI
+import core.DrawPic as DrawPic
 ## Support vector machines
 
 def run_svm( X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
@@ -72,55 +74,6 @@ def run_svm( X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     print(performance)
 
     ### Calculate feature_importances
-    start = perf_counter()
-    util.calc_feature_importance(svm, X_test_new, Y_test, model_name, model_type, Y_name)
-    stop = perf_counter()
-    print("Time: ", timedelta(seconds = stop-start))
-
-    num_features = X_new.shape[1]
-    max_evals = max(2 * num_features + 1, 1500)  # 或你想设的上限
-
-    # Calculate SHAP values
-    #explainer = shap.Explainer(svm.predict, X_test_new, max_evals)
-    #shap_values = explainer(X_test_new)
-    background = shap.sample(X_new, 100)  # 或 X_train[:100]
-
-# 创建 KernelExplainer
-    explainer = shap.KernelExplainer(svm.predict, background)
-
-# 计算 SHAP 值，使用你期望的 max_evals 控制近似精度
-    shap_values = explainer.shap_values(X_test_new, nsamples=max_evals)
-
-    # Save SHAP values per person
-    shap_pp_df_svm = pd.DataFrame(shap_values.values, columns = X_test_new.columns)
-    shap_pp_df_svm.to_csv(f"../results/shap_svm_pp_{Y_name}.csv")
-
-    # Average over all participants
-    importances = []
-    for i in range(shap_values.values.shape[1]):
-        importances.append(np.mean(np.abs(shap_values.values[:, i])))
-
-    feature_importances = {fea: imp for imp, fea in zip(importances, X_new.columns.to_list())}
-
-    # Save averages
-    df_shap = pd.DataFrame.from_dict(feature_importances, orient = 'index')
-    df_shap.to_csv(f"../results/shap_svm_{Y_name}.csv")
-
-    feature_names = [
-        a + ": " + str(b) for a,b in zip(X_test_new.columns, np.abs(shap_values.values).mean(-1).round(3))
-    ]
-
-
-    # Plot top 14 features
-    plt.clf()
-    shap.summary_plot(shap_values, max_display=14,feature_names=feature_names)
-    plt.gcf().set_size_inches(14, 10)
-    plt.savefig(f'../results/SHAP_svm_top14_ntr_{Y_name}.png', bbox_inches="tight", dpi=300)
-    plt.close()
-    # Plot top 14 features (bargraph)
-    plt.clf()
-    shap.summary_plot(shap_values, plot_type="bar", max_display=14,
-                      feature_names=feature_names)
-    plt.gcf().set_size_inches(17, 10)
-    plt.savefig(f'../results/SHAP_svm_top14_bar_ntr_{Y_name}.png', bbox_inches="tight", dpi=500)
-    plt.close()
+    FI.calc_permutation_feature_importance(svm,X_test_new,Y_test,model_name,model_type,Y_name)
+    #shap_value=FI.calc_shap_feature_importances(svm,X_test_new,X_new,Y_name,model_type,model_name)
+    #DrawPic(shap_value,X_test_new,Y_name)

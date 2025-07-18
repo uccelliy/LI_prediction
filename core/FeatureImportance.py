@@ -59,12 +59,18 @@ def calc_permutation_feature_importance(estimator, X, y, model_name, model_type,
     return feature_importances
 
 
-def calc_shap_feature_importances(estimator,X_test_new,Y_name,model_type):
-    #num_features = X_new.shape[1]
-    #max_evals = max(2 * num_features + 1, 1500)  # 或你想设的上限
-    # Calculate SHAP values
-    explainer = shap.Explainer(estimator, X_test_new)
-    shap_values = explainer(X_test_new)
+def calc_shap_feature_importances(estimator,X_test_new,X_new,Y_name,model_type,model_name):
+    if model_name in ["XGB", "RF"]:
+        explainer = shap.TreeExplainer(estimator, X_test_new)
+        shap_values = explainer(X_test_new)
+    elif model_name=="SVM":
+        num_features = X_test_new.shape[1]
+        max_evals = max(2 * num_features + 1, 1500) 
+        background = shap.sample(X_new, 100)  
+        explainer = shap.KernelExplainer(estimator.predict, background)
+        shap_values = explainer.shap_values(X_test_new, nsamples=max_evals)
+    
+    
     # Save SHAP values per person
     shap_pp_df_rf = pd.DataFrame(shap_values.values, columns = X_test_new.columns)
     shap_pp_df_rf.to_csv(f"../results/shap_rf_pp_{Y_name}.csv")
