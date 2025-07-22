@@ -1,3 +1,4 @@
+import xgboost as xgb
 from core.util import n_iter, kfold, random_state
 import pandas as pd
 import core.util as util
@@ -5,7 +6,6 @@ from time import perf_counter
 import shap
 from datetime import timedelta
 from sklearn.model_selection import RandomizedSearchCV
-import xgboost as xgb
 from sklearn.utils.class_weight import compute_sample_weight
 import numpy as np
 import matplotlib
@@ -56,25 +56,25 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
    
 
     grid_xgb_debug={'n_estimators': list(range(100, 1100, 100)),'max_depth': list(range(2, 15))}
-    xgb = RandomizedSearchCV(estimator = model, param_distributions = grid_pipe_xgb, 
+    xgb_regr = RandomizedSearchCV(estimator = model, param_distributions = grid_pipe_xgb, 
                                   scoring = scoring, n_iter = n_iter, 
                                   cv = util.PseudoGroupCV(kfold,groups), 
                                   verbose = 0, random_state = random_state, n_jobs = -1)
     # Randomized search:
     start = perf_counter()
     print("Fitting XGBoost model")
-    xgb.fit(X_new, Y_train.values.ravel(),sample_weight=sample_weight)
-    print("Best params: ", xgb.best_params_)
+    xgb_regr.fit(X_new, Y_train.values.ravel(),sample_weight=sample_weight)
+    print("Best params: ", xgb_regr.best_params_)
     stop = perf_counter()
     print("Time: ", timedelta(seconds = stop-start))
 
     # Save results
-    best_results = util.save_results_cv_pipe(xgb, model_name, model_type, scoring,Y_name,X_new)
+    best_results = util.save_results_cv_pipe(xgb_regr, model_name, model_type, scoring,Y_name,X_new)
     print("Best results:")
     print(best_results)
 
     # Initialize model
-    xgb_mod = xgb.best_estimator_
+    xgb_mod = xgb_regr.best_estimator_
 
     # Fits the model on the data
     if model_type == "class":
@@ -95,4 +95,4 @@ def run_xgb(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     FI.calc_permutation_feature_importance(xgb_mod,X_test_new,Y_test,model_name,model_type,Y_name)
     FI.calc_tree_gini_feature_importance(xgb_mod,model_name,model_type,Y_name)
     shap_value=FI.calc_shap_feature_importances(xgb_mod,X_test_new,X_new,Y_name,model_type,model_name)
-    DrawPic(shap_value,X_test_new,Y_name)
+    DrawPic.draw_pic(shap_value, X_test_new, Y_name)
