@@ -76,4 +76,4 @@ def run_rf(X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     FI.calc_permutation_feature_importance(rf,X_test_new,Y_test,model_name,model_type,Y_name)
     FI.calc_tree_gini_feature_importance(rf,model_name,model_type,Y_name)
     shap_value=FI.calc_shap_feature_importances(rf,X_test_new,X_new,Y_name,model_type,model_name)
-    DrawPic(shap_value,X_test_new,Y_name)
+    DrawPic.draw_pic(shap_value,X_test_new,Y_name)
