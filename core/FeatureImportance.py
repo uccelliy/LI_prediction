@@ -82,8 +82,8 @@ def calc_shap_feature_importances(estimator,X_test_new,X_new,Y_name,model_type,m
 
     
     df_shap_featimp=pd.read_csv(f"../results/shap_feature_importances_{model_type}_{Y_name}.csv", index_col=0)
-    feature_importances = pd.DataFrame(importances,columns=df_shap_featimp.columns.tolist(),index=f"{Y_name}_shap")
-    df_shap_featimp=pd.concat(df_shap_featimp,feature_importances)
+    feature_importances = pd.DataFrame([importances],columns=df_shap_featimp.columns.tolist(),index=[f"{Y_name}_shap"])
+    df_shap_featimp=pd.concat([df_shap_featimp,feature_importances])
     df_shap_featimp.to_csv(f"../results/shap_feature_importances_{model_type}_{Y_name}.csv")
 
     return shap_values
