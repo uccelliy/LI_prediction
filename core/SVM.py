@@ -76,4 +76,4 @@ def run_svm( X_new, X_test_new, Y_train, Y_test,Y_name,groups,model_type):
     ### Calculate feature_importances
     FI.calc_permutation_feature_importance(svm,X_test_new,Y_test,model_name,model_type,Y_name)
     #shap_value=FI.calc_shap_feature_importances(svm,X_test_new,X_new,Y_name,model_type,model_name)
-    #DrawPic(shap_value,X_test_new,Y_name)
+    #DrawPic.draw_pic(shap_value,X_test_new,Y_name)
